@@ -1,0 +1,6 @@
+/Users/ber253/projects/CLion/localSearch/build/CMakeFiles/edit_cache.dir
+/Users/ber253/projects/CLion/localSearch/build/CMakeFiles/rebuild_cache.dir
+/Users/ber253/projects/CLion/localSearch/build/CMakeFiles/main.dir
+/Users/ber253/projects/CLion/localSearch/build/src/CMakeFiles/edit_cache.dir
+/Users/ber253/projects/CLion/localSearch/build/src/CMakeFiles/rebuild_cache.dir
+/Users/ber253/projects/CLion/localSearch/build/src/CMakeFiles/SOURCE_FILES.dir

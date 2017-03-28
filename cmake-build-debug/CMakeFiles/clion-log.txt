@@ -1,0 +1,9 @@
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/ber253/projects/LocalSearchVRPTW
+APPLE1
+Gurobi version 652
+APPLE2
+Looking for Gurobi in /Library/gurobi652/mac64
+Gurobi found with include: /Library/gurobi652/mac64/include and library: /Library/gurobi652/mac64/lib/libgurobi_c++.a;/Library/gurobi652/mac64/lib/libgurobi65.so
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/ber253/projects/LocalSearchVRPTW/cmake-build-debug

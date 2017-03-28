@@ -1,0 +1,16 @@
+add_library(SOURCE_FILES
+                data.cpp
+                solution.cpp
+                costDistance.cpp
+                costCapacity.cpp
+                costFixed.cpp
+                crossReverseGenerator.cpp
+                crossReverseMove.cpp
+                parse.cpp
+                options.cpp
+                lateAcceptanceSteepestDescent.cpp
+                initializerInsertion.cpp
+                routes.cpp
+                initializerMultipleRoutes.cpp
+                initializerCosts.cpp
+                )

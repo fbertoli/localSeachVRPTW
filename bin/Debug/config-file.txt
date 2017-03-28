@@ -1,0 +1,2 @@
+costs: distanceCost
+moves: crossReverseMove

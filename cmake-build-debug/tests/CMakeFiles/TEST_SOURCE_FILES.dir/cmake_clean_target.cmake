@@ -1,0 +1,3 @@
+file(REMOVE_RECURSE
+  "libTEST_SOURCE_FILES.a"
+)

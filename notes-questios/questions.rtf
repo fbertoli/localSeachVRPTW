@@ -1,0 +1,27 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww15000\viewh10340\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 - does it makes sense to save departure times in solution instead of computing them every time?\
+- do first() next() return a move or modify an existing move and return a bool for has next? bool.\
+- give a move, how do you ask for cost? overload a function computeDelta in cost classes? yes.\
+- how to perform a move? copy the solution and modify that? no. modify alway current solution\
+- hierarchy? General class move and moveGenerator? yes.\
+- hierarchy? how to organize the cost classes? Yes. hierarchy\
+\
+- does it makes sense to define visit_j_ and visit_succ_j_ or is it the same to put current_solution -> tour_[j_]? (also for legibility)\
+\
+\
+POSSIBLE OPTIMIZATION OF CODE\
+in the algorithm when computing cost of routes. It would be better to make the move update the routes_cost_ vector so that we don\'92t have to recompute the cost for all routes.\
+\
+TO DO\
+- InitializerMulitpleRoutes could be a child class of InitializerInsertion, only chasing the initializeSolution method. Right now Options give me problems when destructing multiple objects sharing the same options,\
+\
+- routeContainer::updateIntegerSolution\
+drop the customers that impact the cost the most\
+? add the routes changed cause they dropped customers? it looks it makes a different in the first run\
+\
+ }

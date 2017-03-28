@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/data.h
+vector
+-
+iostream
+-
+fstream
+-
+string
+-
+
+/Users/ber253/projects/CLion/localSearch/src/data.cpp
+data.h
+/Users/ber253/projects/CLion/localSearch/src/data.h
+
+/Users/ber253/projects/CLion/localSearch/tests/testMain.cpp
+iostream
+-
+data.h
+/Users/ber253/projects/CLion/localSearch/tests/data.h
+

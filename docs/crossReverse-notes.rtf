@@ -1,0 +1,54 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Variables describing the swap are i_, j_, k_, l_ and route_1_, route_2_\
+We move  the path (i_ + 1, j_) to from route_1_ to route_2_ positioning it after k_ and possibly, reorientation it. If  (i_ == j_) we do not move anything from route_1_\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+Similarly, We move  the path (k_ + 1, l_) to from route_2_ to route_1_ positioning it after i_ and possibly, reorientation it. If (k_ == l_) we do not move anything from route_1_\
+\
+\
+The exploration follows this order:\
+first try to increase l_ (bounds are: last customer of the route, k_ + max_lenght_path)\
+then try to increase j_ (bounds are: last customer of the route, i_ + max_lenght_path)\
+then try to decrease k_ (bounds: first customer)\
+then try to decrease i_ (bounds: first customer)\
+then try to increase route_2_\
+then try to increase route_1_\
+\
+AUXILIARY VARIABLES TO AVOID REPEAT COMPUTATIONS\
+I keep variables to facilitate the feasibility checking.\
+Note: path 1 is the segment going from i_ + 1 to  j_ (regardless of the orientation) \
+- departures_path_1[ j ][ i + 1][ k ] records the departure time from j_ if we go k_ \'97> i_ + 1,\'85, j_\
+- departures_path_1[ i + 1][ j ][ k ] records the departure time if we invert path 1 ( k\'97> i_,\'85,i_+ 1)\
+- same for path_2\
+\
+- path_latest_departure[ a ][ b ] records the latest we can leave from a to get to b respecting all the time windows on the way (path_latest_departure[ b ][ a ] records the other orientation)\
+- path_loads[ a ][ b ]  is the sum of demands of path a \'97> b (orientation doesn\'92t matter)\
+- start_l_index[ j ] [i + 1][ k] record the index l after which route_2 is feasible (increasing l cannot change the feasibility of route2). This is for the orientation i + 1 \'97> j \
+-start_l_index[i + 1][ j ] [ k] records the same thing for the reversed orientation\
+Note that start_l_index is kept only for route 2 (that\'92s because the inside loop is on l_)\
+\
+\
+INITIALIZATION PROPAGATION\
+All these quantities are initialized once when one index (j_, k_, i_) changes and then propagated forward or backward:\
+examples:\
+path_late_departures are initialized on path composed by a single nodes for all routes > 0 when d_ is decreased the fist time (i.e. route_0_ == 1 and  i_ == last customer) cause j_ is set to k_+1 and we can initialize path_latest_departure[k_+1][k_+1]. Then when l_ is increase we propagate the information.\
+Example path_latest_departure[k_+1][j_] is obtained from path_latest_departure[k_+2][j_] (backward) while path_latest_departure[j_][k_+1] is obtained from  path_latest_departure[j_ -1 ][k_+1](forward).\
+For route 0 we initialize and propane when i_ is decrease and j_ is increased.\
+\
+FEASIBILITY VARIABLES\
+there are a few variables recording feasibility:\
+feasibility_to_path_1_standard_  records if we can reach path 1 from route before path_latest_departure[i_ + 1][ j_ ].\
+Similarly feasibility_to_path_1_reversed_ consider the reversed path_1.\
+\
+feasibility_route_1_standard_ records if route 1 (with the insertion of path 2 and removal of path 1) is feasible (true) or we don\'92t know (false)\
+\
+When we update the indexes some have to be re-set, others not. For example:\
+increasing l_ does not affect the new route_2_, therefore I do not reset the feasibility variables for route_2_, and consequently, if feasibility_route_2_standard_ is true we do not need to check route_2_ in the standard orientation, if it is false we need to check.\
+\
+\
+}
