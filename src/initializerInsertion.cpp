@@ -53,7 +53,7 @@ Solution InitializerInsertion::initializeSolution()
     double inf = std::numeric_limits<double>::max();
 
     // CREATE DATA STRUCTURES
-    vector<double> position_cost(data_.n_requests_, inf);       // keep track of the best position cost found for each custoemr
+    vector<double> position_cost(data_.n_requests_, inf);       // keep track of the best position cost found for each customer
     vector<int> predecessor_index(data_.n_requests_, -1);       // keep track of the best predecessor found for each customer
     vector<bool> feasible(data_.n_requests_, false);            // keep track if a position was found
 
@@ -66,8 +66,8 @@ Solution InitializerInsertion::initializeSolution()
     // CREATE STARTING SOLUTION
     vector<int> tour{data_.n_requests_, seed_customer, data_.n_requests_ + 1};
     vector<double> arrivals(data_.n_requests_ + 1, 0);
-    arrivals[seed_customer] = data_.true_distances_[data_.n_requests_][seed_customer];
-    arrivals.push_back(max(arrivals[seed_customer], data_.start_TW_[seed_customer]) + data_.service_time_[seed_customer] + data_.true_distances_[seed_customer][data_.depot_]);
+    arrivals[seed_customer] = data_.distances_[data_.n_requests_][seed_customer];
+    arrivals.push_back(max(arrivals[seed_customer], data_.start_TW_[seed_customer]) + data_.service_time_[seed_customer] + data_.distances_[seed_customer][data_.depot_]);
     Solution solution{data_, tour, arrivals};
 
 
@@ -90,21 +90,21 @@ Solution InitializerInsertion::initializeSolution()
 
             // if customer is unrouted and in the same cluster of seed customer and capacity checks
             if (clusterisation_->at(customer) == clusterisation_->at(seed_customer) && unrouted_[customer] && route_load + data_.demands_[customer] < capacity_) {
-                // re-initialize varaibles
+                // re-initialize variables
                 position_cost[customer] = inf;
 
                 // look for best insertion position
                 for (int position = solution.tour_.size() - 2; position >= solution.start_positions_[solution.n_routes_ -1]; --position ) {
                     predecessor = solution.tour_[position];
-                    arrival_time_visit = solution.departures_[predecessor] + data_.true_distances_[predecessor][customer];
+                    arrival_time_visit = solution.departures_[predecessor] + data_.distances_[predecessor][customer];
 
-                    // chekc arrival time at cutomer
+                    // check arrival time at cutomer
                     if (arrival_time_visit > data_.end_TW_[customer])
                         continue;
 
                     // compute new departure time
                     successor = solution.tour_[position + 1];
-                    new_arrival_successor = max(arrival_time_visit, data_.start_TW_[customer]) + data_.service_time_[customer] + data_.true_distances_[customer][successor];
+                    new_arrival_successor = max(arrival_time_visit, data_.start_TW_[customer]) + data_.service_time_[customer] + data_.distances_[customer][successor];
                     new_departure_successor = max(new_arrival_successor, data_.start_TW_[successor])+ data_.service_time_[successor];
 
                     if (((successor >= data_.depot_) && (new_arrival_successor < data_.end_TW_.back())) || (new_departure_successor < solution.latest_departures_[successor])) {
@@ -136,7 +136,7 @@ Solution InitializerInsertion::initializeSolution()
         // insert customer or create new route
         if (to_insert > -1) {
             solution.insertCustomer(solution.n_routes_ - 1, to_insert, predecessor_index[to_insert]);
-            assert(solution.arrivals_[to_insert] < data_.end_TW_[to_insert] && "insertion not feasible in InsertionI1");
+            assert(solution.arrivals_[to_insert] <= data_.end_TW_[to_insert] && "insertion not feasible in InsertionI1");
             unrouted_[to_insert] = false;
             --unrouted_req_;
             route_load += data_.demands_[to_insert];
@@ -155,11 +155,11 @@ Solution InitializerInsertion::initializeSolution()
     if (default_clusterisation.size())
         clusterisation_= nullptr;
 
-    // CREATE MODELS
+    // UPDATE ROUTE CONTAINERS
     solution.computeRoutesCost(*cost_components_route_);
     route_container_->extractRoutes(solution, vector<int>());
+//    route_container_->createIntegerModel();
 //    route_container_->createLinearModel();
-    route_container_->createIntegerModel();
 
     return solution;
 }
@@ -201,8 +201,8 @@ int InitializerInsertion::selectSeedCustomer()
 
         if (seed_selection_ == 0) {
             // If the custopmer with the earliest start does not have to be the first take the fursthest
-            if (max(data_.true_distances_[data_.depot_][second_earliest], data_.start_TW_[second_earliest]) +
-                data_.service_time_[second_earliest] + data_.true_distances_[second_earliest][earliest] <
+            if (max(data_.distances_[data_.depot_][second_earliest], data_.start_TW_[second_earliest]) +
+                data_.service_time_[second_earliest] + data_.distances_[second_earliest][earliest] <
                 data_.end_TW_[earliest])
                 return furthest;
             else

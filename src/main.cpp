@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     // CREATE MOVES and GENERATORS
     CrossReverseMove cross_reverse_move;
     CrossReverseMove cross_reverse_move_best;
-    CrossReverseGenerator cross_reverse_generator(data, nullptr, capacity_coefficient);
+    CrossReverseGenerator cross_reverse_generator(data, nullptr, capacity_coefficient, &cross_reverse_move_best, &cross_reverse_move);
 
 
     // CREATE VECTOR of POSSIBLE COSTS and MOVES
@@ -117,5 +117,6 @@ int main(int argc, char **argv) {
 
 //    algorithm.reset();
     algorithm.run();
+    algorithm.printOuput();
 
 }

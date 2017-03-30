@@ -20,7 +20,7 @@ using namespace std;
 
 struct comparisonDistancesStruct {
     Data &data_;
-    bool operator() (int i,int j) { return data_.true_distances_[data_.depot_][i] < data_.true_distances_[data_.depot_][j];}
+    bool operator() (int i,int j) { return data_.distances_[data_.depot_][i] < data_.distances_[data_.depot_][j];}
 };
 
 

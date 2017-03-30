@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc liblocalSearch.a  CMakeFiles/localSearch.dir/testMain.cpp.o CMakeFiles/localSearch.dir/__/src/data.cpp.o
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib liblocalSearch.a

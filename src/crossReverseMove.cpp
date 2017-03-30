@@ -5,7 +5,20 @@
 #include "crossReverseMove.h"
 #include "data.h"
 
-
+CrossReverseMove& CrossReverseMove::operator= (const CrossReverseMove &other_move) {
+    i_ = other_move.i_;
+    j_ = other_move.j_;
+    k_ = other_move.k_;
+    l_ = other_move.l_;
+    route_1_ = other_move.route_1_;
+    route_2_ = other_move.route_2_;
+    reverse_path_1_ = other_move.reverse_path_1_;
+    reverse_path_2_ = other_move.reverse_path_2_;
+    delta_distance_ = other_move.delta_distance_;
+    delta_capacity_ = other_move.delta_capacity_;
+    route_removed_ = other_move.route_removed_;
+    return *this;
+}
 
 void CrossReverseMove::setMoveVariables(int i, int j, int k, int l, int route_1, int route_2, bool reverse_path_1, bool reverse_path_2)
 {

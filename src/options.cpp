@@ -1,11 +1,16 @@
 #include <string>
 #include <iostream>
+#include <algorithm>
 
 #include "options.h"
 
 using namespace std;
 
 Options* Options::_inst = nullptr;
+
+bool Options::_parsed = false;
+
+bool Options::_help_requested = false;
 
 string Options::_prefix = "--";
 
@@ -34,26 +39,24 @@ Options& Options::get()
   return *_inst;
 }
 
-const BaseOption& Options::operator[](const string& key) const
+void Options::remove(BaseOption *o)
 {
-  auto oit = _opts.find(key);
-  if (oit == _opts.end())
-    throw std::runtime_error("Option " + key + " not found.");
-  return *oit->second;
-}
-
-const BaseOption& Options::get(const string& key)
-{
-  return Options::get()[key];
+  auto os = _opts[o->_name];
+  auto p = std::find(os.begin(), os.end(), o);
+  if (p != os.end())
+    os.erase(p);
 }
 
 void Options::help()
 {
-  cerr << Options::get();
+  cerr << Options::get() << endl;
 }
 
 void Options::parse(int argc, char** argv)
 {
+  if (_parsed)
+    return;
+
   Options& o = Options::get();
 
   // store name of the executable (index 0)
@@ -67,8 +70,7 @@ void Options::parse(int argc, char** argv)
     auto key = string(argv[p_index++]);
 
     // find whether the prefix is there
-    auto index = 0u;
-    index = key.find(_prefix, index);
+    auto index = key.find(_prefix, 0);
 
     if (index != 0 || index == string::npos)
       throw runtime_error("Parameter " + key + " does not start with prefix (" + _prefix + ")");
@@ -77,14 +79,33 @@ void Options::parse(int argc, char** argv)
 
     if (key == "help")
     {
-      Options::help();
+      _help_requested = true;
       continue;
     }
 
     auto value = argv[p_index++];
 
-    if (o._opts.find(key) != o._opts.end())
-      o._opts[key]->parse(value);
+    o._vals[key] = value;
+  }
+
+  // assign parsed values to already declared parameters
+  for (const auto& key_value : o._vals)
+  {
+    auto optsi = o._opts.find(key_value.first);
+    if (optsi != o._opts.end())
+      for (auto& o : optsi->second)
+        o->parse(key_value.second);
+  }
+
+  _parsed = true;
+}
+
+void Options::help_if_requested()
+{
+  if (_help_requested)
+  {
+    help();
+    std::exit(0);
   }
 }
 
@@ -93,16 +114,15 @@ void Options::set_prefix(const string& p)
   Options::_prefix = p;
 }
 
-Options& Options::add(BaseOption* o)
+void Options::add(BaseOption* o)
 {
-  _opts[o->_name] = o;
-  return *this;
+  _opts[o->_name].push_back(o);
 }
 
-Options& Options::remove(BaseOption* o)
+void Options::check_value(BaseOption *o)
 {
-  _opts.erase(_opts.find(o->_name));
-  return *this;
+  if (_vals.find(o->_name) != _vals.end())
+    o->parse(_vals[o->_name]);
 }
 
 ostream& operator<<(ostream& os, const Options& o)
@@ -112,11 +132,12 @@ ostream& operator<<(ostream& os, const Options& o)
 
   os << "Usage: " << o._executable << " OPTIONS" << endl;
   os << "Options: " << endl << endl;
-  for (auto& op : o._opts)
+  for (auto& opts : o._opts)
   {
-    os << "  " << Options::_prefix << op.second->_name << " ";
-    op.second->print(os, true);
-    os << ", " << op.second->_description << endl;
+    auto& op = opts.second.front();
+    os << "  " << Options::_prefix << op->_name << " ";
+    op->print(os, true);
+    os << ", " << op->_description << endl;
   }
 
   return os;

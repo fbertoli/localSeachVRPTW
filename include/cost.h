@@ -39,7 +39,7 @@ public:
 
     /**VARIABLES */
 public:
-    /** pointer to data of the isntance */
+    /** pointer to data of the instance */
     const Data &data_;
 
     /** name of the cost (to debug) */

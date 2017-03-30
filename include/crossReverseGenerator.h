@@ -12,6 +12,8 @@
 #include "crossReverseMove.h"
 #include "moveGenerator.h"
 #include "options.h"
+#include "costFixed.h"
+#include "costCapacity.h"
 
 /** This class implements the generator for crossReverse type moves.
  *  It handles the necessary data structure to avoid computing the same quantities twice.
@@ -25,19 +27,21 @@ class CrossReverseGenerator : public MoveGenerator
 
     /** CONSTRUCTORS */
 public:
-    CrossReverseGenerator(const Data &data, Solution* sol, double capacity_coefficient);
+    CrossReverseGenerator(const Data &data, Solution* sol, double capacity_coefficient, CrossReverseMove *best_move, CrossReverseMove *move);
 
     /** METHODS */
 public:
     /** assign the first feasible move to move (note the capacity could be modified)*/
-    virtual bool first(Move &move);
-    /** assign the nets feasible move to move (the order is defined through while loops)*/
-    virtual bool next(Move &move);
-    /** assign a random feasible move to move (still to be implement) */
-    virtual bool random(Move &move);
+    virtual bool first();
 
-    /** access capacity_coefficient_ */
-    double getCapacityCoefficient() {return capacity_coefficient_;}
+    /** assign the nets feasible move to move (the order is defined through while loops)*/
+    virtual bool next();
+
+    /** assign a random feasible move to move (still to be implement) */
+    virtual bool random();
+
+    /** copy the content of the current move into best_move_ */
+    virtual void updateBestMove() {*best_move_ = *move_;};
 
 private:
     /** update the routes_load_ field */
@@ -46,11 +50,14 @@ private:
     /** update the visit_ variables given the indexes in tour_ */
     void setVisits();
 
-    /** update the move fields (included the costs) */
-    void foundMove(double candidate_delta, CrossReverseMove &move, bool reverse_path_1, bool reverse_path_2);
+    /** get the corresponding visit */
+    inline int getVisit(int route, int position) {return current_solution_->tour_[current_solution_->start_positions_[route] + position];}
+    inline int getVisit(int position) {return current_solution_->tour_[position];}
 
     /** update the move fields (included the costs) */
-    void updateMove(CrossReverseMove &move);
+    void foundMove(bool reverse_path_1, bool reverse_path_2);
+
+    /** functions to check feasibility */
     inline bool feasibilityFromPath2Standard();
     inline bool feasibilityFromPath2Reversed();
     inline bool feasibilityFromPath1Standard();
@@ -60,39 +67,52 @@ private:
     inline double deadlineComingBackToRoute1();
     inline double deadlineComingBackToRoute2();
 
-    /** compute the delta of the candidate move */
-    double computeDelta(bool standard_path_1, bool standard_path_2);
+    /** compute the delta wrt to cost source */
+    void computeDeltaDistance(bool reverse_path_1, bool reverse_path_2, double &delta_distance);
+    void computeDeltaCapacity(double &delta_capacity);
+
+//    /** return the path cost of start -> start + step + 1 using  start -> start + step (start is relative to tour_) */
+//    double extendStandardPathCost(int start, int step);
+//    /** return the path cost of start + step + 1 --> start using  start + step -> start  (start is relative to tour_) */
+//    double extendReversedPathCost(int start, int step);
+
+    /** intialize path cost (position is relative to tour_) */
+    inline double initializePathCost(int position) {return 0;}
 
 
     /** VARIABLES */
 public:
+    /** pointer to the best_move_ and move_ (the one that gets modified) objects */
+    CrossReverseMove *best_move_, *move_;
+
     /** the maximum length of path to exchange */
-    Option<int> max_length_path_opt_;
-    int max_length_path_;
+    Option<int> max_length_path_;
+//    int max_length_path_;
 
     /** multiplicative coefficient for capacity to increase/decrese it */
-    double capacity_coefficient_;
+    double modified_capacity_;
 
     /** route involved in the exchanged of path */
     int route_1_;
     int route_2_;
+    int length_route_1_;
+    int length_route_2_;
 
-    /** we are exchange the path i+1 -> j of route_1_ with the path k+1 -> l of route_2_ */
+    /** we are exchange the path i+1 -> i_+j_ of route_1_ with the path k+1 -> k_+l_ of route_2_
+     *  all index are relative to current_solution_->start_positions_[route_1/2_]   */
     int i_,j_,k_,l_;
 
-    /** corresponding visits and successors */
-    int visit_i_, visit_j_, visit_k_, visit_l_, visit_succ_i_, visit_succ_k_, visit_succ_j_, visit_succ_l_;
+    /** visits corresponding to indexes and successors (note, visit_l refers to visit in current_solution_->start_positions_[route_2_] + k_+l_ ] )*/
+    int visit_i_, visit_j_, visit_k_, visit_l_;
+    int visit_succ_i_, visit_succ_k_, visit_succ_j_, visit_succ_l_;
 
-    /** the best_delta of a move found so far and the current move's one */
-    double best_delta_;
+    /** index in current_solution_-> tour_ corresponding to index here */
+    int tour_index_i_, tour_index_k_, tour_index_j_, tour_index_l_;
 
-    /** auxiliary varaibles */
-    double delta_distance_;
-    double delta_reduced_cost_;
-    double delta_;
-
-    /** record if there is a next possibility */
+    /** record if there is a next possibility to examine */
     bool has_next_;
+
+    /** record if we found a feasible move */
     bool move_found_;
 
     /** record the feasibility of reaching path 1 (standard and reverse orientation) from route 2  */
@@ -104,38 +124,36 @@ public:
     /** record the feasibility of the whole route */
     bool feasibility_route_2_standard_, feasibility_route_2_reversed_, feasibility_route_1_standard_, feasibility_route_1_reversed_;
 
+    // note that in all of the below matrices, the step_ 0 is not used as it corresponds to no path, this could be optimised
 
-    /** record from which l_ we should start looking at every next iteration of j to check for feasibility of new route 2 */
-    vector<vector<vector<int>>> start_l_index_;
+    /** departures_path_1_standard_[step_][b_][a_] record the departure time from b_+step_ of the path (depot_,..,a_, b_,..,b_+step_)
+     *  departures_path_1_reversed_[step_][b_][a_] record the departure time from b_ of the path (depot_,..,a_, b_+step_,..,b_)
+     *  (indexes a,b are relative to routes) */
+    vector<vector<vector<double>>> departures_path_1_standard_, departures_path_1_reversed_;
+    vector<vector<vector<double>>> departures_path_2_standard_, departures_path_2_reversed_;
 
-    /** departures_path_1_[visit_j_][visit_succ_i_][visit_k_] record the departure time from j_ of the path (depot_,..,k_, i_+1,..,j_) */
-    vector<vector<vector<double>>> departures_path_1_;
+    /** path_latest_departure_standard_[a_][step_] the latest departure from position a_ so that feasibility is not lost up to position a_ + step_
+     *  path_latest_departure_reversed_[a_][step_] -> latest departure from a_ + step_ to get to a_
+     *  (index a_ is relative to tour_) */
+    vector<vector<double>> path_latest_departure_standard_;
+    vector<vector<double>> path_latest_departure_reversed_;
 
-    /** departures_path_2_[visit_l_][visit_succ_k_][visit_i_] record the departure time from l_ of the path (depot_,..,i_, k_+1,..,l_) */
-    vector<vector<vector<double>>> departures_path_2_;
-
-    /** path_latest_departure_[i_][i_] the latest departure from i_ so that feasibility is not lost up to j_ (the order of the index establish the orientation)*/
-    vector<vector<double>> path_latest_departure_;
-
-    /** the load of paths */
+    /** paths_load_[a_][step_] the load of path a_ --> a_ + step_
+     * (index a_ is relative to tour_) */
     vector<vector<int>> paths_load_;
 
-    /** [i][j] = distance of path i-->j - dual_vars of nodes on the path i--->j */
-    vector<vector<double>> path_cumulative_cost;
-
+//    /** path_cumulative_cost_standard_[a_][step_] = cost of the of path a_ --> a_ + step_
+//     *  path_cumulative_cost_reversed_[a_][step_] = cost of the of path a_ + step_ --> a_
+//     *  (index a_ is relative to tour_) */
+//    vector<vector<double>> path_cumulative_cost_standard_;
+//    vector<vector<double>> path_cumulative_cost_reversed_;
 
     /** keep memory of the total load of each route */
     vector<int> routes_load_;
 
-public:
-    /** dual variables */
-    vector<double> *dual_variables_;
-
-    /** whether to count the dual load or not */
-    bool reduced_cost_option_;
-
-
     friend class CrossReverseMove;
+    friend class costFixed;
+    friend class costCapacity;
 };
 
 

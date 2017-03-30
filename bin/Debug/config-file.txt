@@ -1,2 +1,0 @@
-costs: distanceCost
-moves: crossReverseMove

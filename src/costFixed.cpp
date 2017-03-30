@@ -7,19 +7,6 @@
 
 
 
-
-
-double CostFixed::computeDelta(Solution& solution, RelocateMove &move) {
-    bool created_route = (move.new_predecessor_index_ == solution.tour_.size() - 1);
-    bool destroyed_routed = (solution.tour_[move.old_position_-1] >= solution.n_routes_) && (solution.tour_[move.old_position_+1] >= solution.n_routes_);
-    return (static_cast<int>(created_route) - static_cast<int>(destroyed_routed))*fixed_cost_;
-}
-
-
-
-/** -------------------------------------------------------------------------------- */
-
-
 double CostFixed::computeDelta(Solution& solution, CrossReverseMove &move) {
     return -fixed_cost_* static_cast<int>(move.route_removed_);
 }

@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libTEST_SOURCE_FILES.a  CMakeFiles/TEST_SOURCE_FILES.dir/testMains/testSolution.cpp.o CMakeFiles/TEST_SOURCE_FILES.dir/testMains/testRelocate.cpp.o CMakeFiles/TEST_SOURCE_FILES.dir/testMains/testCross.cpp.o
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libTEST_SOURCE_FILES.a

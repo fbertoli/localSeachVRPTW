@@ -4,29 +4,6 @@
 
 #include "costCapacity.h"
 
-
-double CostCapacity::computeDelta(Solution& solution, RelocateMove &move) {
-    double cost = 0;
-
-    // ORIGIN ROUTE
-    int load = 0;
-    for (int i = solution.start_positions_[move.origin_route_] + 1; i < solution.start_positions_[move.origin_route_+1]; ++i)
-        load += data_.demands_[solution.tour_[i]];
-    cost -= penalization_*(max(load, data_.capacity_) - max(load - data_.demands_[solution.tour_[move.old_position_]], data_.capacity_));
-
-    // DESTINATION ROUTE
-    load = 0;
-    if (move.destination_route_ < solution.n_routes_)
-        for (int i = solution.start_positions_[move.destination_route_] + 1; i < solution.start_positions_[move.destination_route_+1]; ++i)
-            load += data_.demands_[solution.tour_[i]];
-    cost += penalization_*(max(load + data_.demands_[solution.tour_[move.old_position_]], data_.capacity_) - max(load, data_.capacity_));
-
-    return cost;
-}
-
-
-/** -------------------------------------------------------------------------------- */
-
 double CostCapacity::computeDelta(Solution& solution, CrossReverseMove &move) {
     return move.delta_capacity_*penalization_;
 }

@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+/** This class represent the instance being solved
+ * */
+
 using namespace std;
 class Data
 {
@@ -21,32 +24,45 @@ private:
     double stringToDouble(const string &Text);
 
 public:
+    /** number of requests */
     int n_requests_;
+
+    /** maximum vehicles available */
     int max_vehicles_;
+
+    /** capacit yof a vehicle */
     int capacity_;
+
+    /** the depot */
     int depot_;
 
     /** name of the instance */
     string name_;
 
+    /** demands of customers */
     vector<int> demands_;
+
+    /** position, service time and start/end of TW of customers */
+    vector<int> service_time_;
+    vector<int> x_coord_;
+    vector<int> y_coord_;
     vector<double> start_TW_;
     vector<double> end_TW_;
 
     /** this amounts to end_TW + service time */
     vector<double> latest_departure_possible_;
-    vector<int> service_time_;
-    vector<int> x_coord_;
-    vector<int> y_coord_;
 
     /** the true distance from two customers */
-    vector<vector<double>> true_distances_;
+    vector<vector<double>> distances_;
 
-    /** the distances including the dual variables */
-    vector<vector<double>> modified_distances_;
+    /** the distances including the service time */
+    vector<vector<double>> distances_service_;
 
-    /** preliminary elimination of arcs that are excludede by time constraints */
+    /** preliminary elimination of arcs that are excluded by time constraints */
     vector< vector<bool> > possible_arcs_;
+
+    /** maximum customers in a route (based on capacity) */
+    int max_routes_stops_;
 
 };
 

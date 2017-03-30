@@ -32,9 +32,9 @@ RouteContainer::RouteContainer(Data& data) :
 //        to_integrate_linear_(0),
 {
     routes_.clear();
-    dual_variables_.resize(data_.n_requests_,0);
     integer_model_.set(GRB_StringAttr_ModelName, "SPP-MIP");
     integer_model_.getEnv().set(GRB_IntParam_OutputFlag, 0);
+//    dual_variables_.resize(data_.n_requests_,0);
 //    linear_model_.set(GRB_StringAttr_ModelName, "SPP-LP");
 //    linear_model_.getEnv().set(GRB_IntParam_OutputFlag, 0);
 //    out_file_.open(data_.name_ + "-duals.txt");

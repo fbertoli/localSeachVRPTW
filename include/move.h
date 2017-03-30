@@ -15,6 +15,8 @@ class Cost;
 using namespace std;
 
 class Move {
+//public:
+//    virtual  Move& operator= (const Move &other_move);
 
 public:
 

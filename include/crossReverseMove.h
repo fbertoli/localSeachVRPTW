@@ -17,12 +17,15 @@ class Cost;
 class CrossReverseMove : public Move{
 
 
-    /** CONSTRUCTORS */
+    /** CONSTRUCTORS - ASSIGNMENT*/
 public:
     CrossReverseMove(int i, int j, int k, int l) :
             i_(i), j_(j), l_(l), k_(k) {};
 
     CrossReverseMove() {};
+
+    CrossReverseMove& operator= (const CrossReverseMove &other_move);
+
 
     /** METHODS */
 public:
@@ -57,7 +60,6 @@ public:
     /** the delta cost I calculate in the generator */
     double delta_distance_;
     double delta_capacity_;
-    double delta_reduced_cost_;
 
     /** whether the move is removing a route */
     bool route_removed_;

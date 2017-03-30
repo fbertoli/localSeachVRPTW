@@ -34,7 +34,7 @@ public:
     /** access capacity */
     double getCapacity() { return  capacity_;}
 
-    /** if there is a swticher */
+    /** if there is a switcher */
     virtual void switcher(string s) {};
 
 

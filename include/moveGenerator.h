@@ -15,17 +15,23 @@ public:
     /** METHODS */
 public:
     /** return true if it found a move/false if we reached end and found no move */
-    virtual bool first(Move& move) = 0;
+    virtual bool first() = 0;
 
     /** return true if it found a move/false if we reached end and found no move */
-    virtual bool next(Move& move)  = 0;
+    virtual bool next()  = 0;
 
     /** return true if it found a move */
-    virtual bool random(Move& move) = 0;
+    virtual bool random() = 0;
 
+    /** whether there is some space left to explore */
     bool hasNext() {return has_next_;};
 
+    /** change the pointe to current solution */
     void setSolutionPntr(Solution* solution) {current_solution_ = solution;}
+
+    /** copy the content of the current move into best_move_ */
+    virtual void updateBestMove() = 0;
+
 
 
     /** VARIABLES */

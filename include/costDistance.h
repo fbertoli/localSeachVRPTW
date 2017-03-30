@@ -5,7 +5,6 @@
 #ifndef LOCALSEARCH_DISTANCECOST_H
 #define LOCALSEARCH_DISTANCECOST_H
 
-#include "relocateMove.h"
 #include "crossReverseMove.h"
 #include "cost.h"
 
@@ -20,8 +19,6 @@ public:
 public:
 
     virtual double computeDelta(Solution& solution, Move &move) {return move.computeCost(solution, this);};
-
-    virtual double computeDelta(Solution& solution, RelocateMove &move);
 
     virtual double computeDelta(Solution& solution, CrossReverseMove &move);
 

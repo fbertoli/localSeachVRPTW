@@ -21,7 +21,7 @@ class Solution
 {
 
 
-    /** CONSTRUCTORS */
+    /** CONSTRUCTORS - ASSIGNMENT */
 public:
     Solution(const Data &data, vector<int> tour, vector<double> arrivals, vector<double> departures, vector<double> latest_departures, vector<int> start_positions);
 
@@ -29,9 +29,9 @@ public:
 
     Solution(const Data &data, vector<int> tour);
 
-    Solution& operator= (const Solution &solution);
-
     Solution(const Data &data) : data_(data) {};
+
+    Solution& operator= (const Solution &solution);
 
     /** METHODS */
 public:

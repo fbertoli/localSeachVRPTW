@@ -54,8 +54,8 @@ Solution InitializerMultipleRoutes::initializeSolution()
     // CREATE STARTING SOLUTION
     vector<int> tour{data_.n_requests_, seed_customer, data_.n_requests_ + 1};
     vector<double> arrivals(data_.n_requests_ + 1, 0);
-    arrivals[seed_customer] = data_.true_distances_[data_.n_requests_][seed_customer];
-    arrivals.push_back(max(arrivals[seed_customer], data_.start_TW_[seed_customer]) + data_.service_time_[seed_customer] + data_.true_distances_[seed_customer][data_.depot_]);
+    arrivals[seed_customer] = data_.distances_[data_.n_requests_][seed_customer];
+    arrivals.push_back(max(arrivals[seed_customer], data_.start_TW_[seed_customer]) + data_.service_time_[seed_customer] + data_.distances_[seed_customer][data_.depot_]);
     Solution solution{data_, tour, arrivals};
 
 
@@ -84,7 +84,10 @@ Solution InitializerMultipleRoutes::initializeSolution()
                 // look for best insertion position
                 for (int position = solution.tour_.size() - 2; position >= solution.start_positions_[solution.n_routes_ -1]; --position ) {
                     predecessor = solution.tour_[position];
-                    arrival_time_visit = solution.departures_[predecessor] + data_.true_distances_[predecessor][customer];
+                    if (predecessor >= data_.depot_)
+                        predecessor = data_.depot_;
+
+                    arrival_time_visit = solution.departures_[predecessor] + data_.distances_[predecessor][customer];
 
                     // chekc arrival time at cutomer
                     if (arrival_time_visit > data_.end_TW_[customer])
@@ -92,7 +95,10 @@ Solution InitializerMultipleRoutes::initializeSolution()
 
                     // compute new departure time
                     successor = solution.tour_[position + 1];
-                    new_arrival_successor = max(arrival_time_visit, data_.start_TW_[customer]) + data_.service_time_[customer] + data_.true_distances_[customer][successor];
+                    if (successor >= data_.depot_)
+                        successor = data_.depot_;
+
+                    new_arrival_successor = max(arrival_time_visit, data_.start_TW_[customer]) + data_.service_time_[customer] + data_.distances_[customer][successor];
                     new_departure_successor = max(new_arrival_successor, data_.start_TW_[successor])+ data_.service_time_[successor];
 
                     if (((successor >= data_.depot_) && (new_arrival_successor < data_.end_TW_.back())) || (new_departure_successor < solution.latest_departures_[successor])) {
@@ -124,13 +130,14 @@ Solution InitializerMultipleRoutes::initializeSolution()
         // insert customer or create new route
         if (to_insert > -1) {
             solution.insertCustomer(solution.n_routes_ - 1, to_insert, predecessor_index[to_insert]);
-            assert(solution.arrivals_[to_insert] < data_.end_TW_[to_insert] && "insertion not feasible in InsertionI1");
+            assert(solution.arrivals_[to_insert] <= data_.end_TW_[to_insert] && "insertion not feasible in InsertionI1");
             unrouted_[to_insert] = false;
             --unrouted_req_;
             route_load += data_.demands_[to_insert];
         }
         else if (seed_customer < data_.n_requests_ - 1)
         {
+            solution.tour_.back() = data_.depot_;
             ++seed_customer;
             solution.insertCustomer(solution.n_routes_, seed_customer, solution.tour_.size() - 1);
             fill(unrouted_.begin(), unrouted_.end(), true);
@@ -154,17 +161,11 @@ Solution InitializerMultipleRoutes::initializeSolution()
     // CREATE MODELS
     solution.computeRoutesCost(* (cost_components_route_));
     route_container_->extractRoutes(solution);
-//    route_container_->createLinearModel();
+    // we should check for doubles
     route_container_->createIntegerModel();
+//    route_container_->createLinearModel();
 
-    // debug only
-    int repetition(0);
-    for (int r1 = 0; r1 < solution.n_routes_; ++r1) {
-        for (int r2 = 0; r2 < r1; ++r2)
-            if (r2 == r1)
-                ++repetition;
-    }
-    cout << "Repetitions "<< repetition << endl;
+
 
     // OPTIMIZE INTEGER MODEL AND GET CURRENT SOLUTION
     route_container_->optimizeIntegerModel();

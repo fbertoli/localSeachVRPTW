@@ -55,8 +55,8 @@ Data::Data(string problem_file_name) {
     end_TW_.clear();
     service_time_.clear();
     latest_departure_possible_.clear();
-    true_distances_.clear();
-    modified_distances_.clear();
+    distances_.clear();
+    distances_service_.clear();
     possible_arcs_.clear();
 
     for (; i < lines.size(); ++i) {
@@ -75,7 +75,7 @@ Data::Data(string problem_file_name) {
     depot_ = n_requests_;
 
     // MODIFICATION MAX VEHICLES
-    max_vehicles_ = n_requests_;
+//    max_vehicles_ = n_requests_;
 
 
 
@@ -104,18 +104,26 @@ Data::Data(string problem_file_name) {
                 if ((start_TW_[i] + service_time_[i] + true_column[j]) <= end_TW_[j])
                     possible_arcs_[i][j] = true;
             }
-//            else if (i > j) {
-//                true_column.push_back(true_distances_[j][i]);
-//                modified_column.push_back(service_time_[i] + true_distances_[j][i]);
-//            }
             else {
                 true_column.push_back(0);
                 modified_column.push_back(0);
             }
         }
-        true_distances_.push_back(true_column);
-        modified_distances_.push_back(modified_column);
+        distances_.push_back(true_column);
+        distances_service_.push_back(modified_column);
     }
+
+
+    // COMPUTE OTHER STATISTICS
+    vector<int> ordered_demands(demands_.cbegin(), demands_.cbegin()+n_requests_);
+    sort (ordered_demands.begin(), ordered_demands.end());
+    max_routes_stops_ = 0;
+    int load(ordered_demands[0]);
+    while (load < capacity_) {
+        ++max_routes_stops_;
+        load += ordered_demands[max_routes_stops_];
+    }
+
 }
 
 int Data::stringToInt(const string &Text) {

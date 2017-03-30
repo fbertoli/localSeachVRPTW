@@ -52,7 +52,7 @@ Solution::Solution(const Data &data, vector<int> tour, vector<double> arrivals) 
         latest_departures_[tour_[start_positions_[r + 1]]] = data_.latest_departure_possible_.back(); //depot end_TW, this will be overwritten in the next iteration by the for below
         for (int i = start_positions_[r + 1] - 1; i >= start_positions_[r]; --i)
             latest_departures_[tour_[i]] = min(data_.latest_departure_possible_[tour_[i]], latest_departures_[tour_[i + 1]] -
-                                                                        data_.true_distances_[tour_[i]][tour_[i + 1]] - data_.service_time_[tour_[i+1]]);
+                                                                        data_.distances_[tour_[i]][tour_[i + 1]] - data_.service_time_[tour_[i+1]]);
     }
     latest_departures_[tour_[start_positions_.back()]] = 0;
 }
@@ -73,7 +73,7 @@ Solution::Solution(const Data &data, vector<int> tour) :
     n_routes_ = tour.back() - data.n_requests_;
 
     for (int i = 1; i < tour.size(); ++i) {
-        arrivals_[tour_[i]] = departures_[tour_[i-1]] + data_.true_distances_[tour_[i-1]][tour_[i]];
+        arrivals_[tour_[i]] = departures_[tour_[i-1]] + data_.distances_[tour_[i-1]][tour_[i]];
         if (tour[i] >= data_.n_requests_)
             start_positions_.push_back(i);
         else
@@ -84,7 +84,7 @@ Solution::Solution(const Data &data, vector<int> tour) :
         latest_departures_[tour_[start_positions_[r + 1]]] = data_.latest_departure_possible_.back(); //depot end_TW, this will be overwritten in the next iteration by the for below
         for (int i = start_positions_[r + 1] - 1; i >= start_positions_[r]; --i)
             latest_departures_[tour_[i]] = min(data_.latest_departure_possible_[tour_[i]], latest_departures_[tour_[i + 1]] -
-                                                                                           data_.true_distances_[tour_[i]][tour_[i + 1]] - data_.service_time_[tour_[i+1]]);
+                                                                                           data_.distances_[tour_[i]][tour_[i + 1]] - data_.service_time_[tour_[i+1]]);
     }
     latest_departures_[tour_[start_positions_.back()]] = 0;
 }
@@ -102,12 +102,27 @@ Solution& Solution::operator= (const Solution &solution) {
     start_positions_ = solution.start_positions_;
     cost_ = solution.cost_;
     routes_costs_ = solution.routes_costs_;
-//    tsp_time_limit_ = solution.tsp_time_limit_;
     return *this;
 }
 
 
 /** ------------------------------------------------------------------------------------------------ */
+
+void Solution::computeRoutesCost(vector<Cost *> &cost_components_route, vector<int> routes_indexes)
+{
+    if (routes_indexes.size()) {
+        for (auto &index : routes_indexes)
+            routes_costs_[index] = 0;
+    }
+    else {
+        // (re-) initialize cost of routes (!! maybe this could be improved)
+        routes_costs_.clear();
+        routes_costs_.resize(n_routes_, 0);
+    }
+    for (auto &cost_source : cost_components_route)
+        cost_source->addRoutesCost(*this, routes_costs_, routes_indexes);
+}
+
 /** ------------------------------------------------------------------------------------------------ */
 
 
@@ -117,10 +132,10 @@ void Solution::insertCustomer(int route, int visit, int pred_index)
     if (route < n_routes_) { //customer has to be inserted in an existing route
         // insert customer and compute arrival/departure
         tour_.insert(tour_.begin() + pred_index + 1, visit);
-        arrivals_[visit] = departures_[tour_[pred_index]] + data_.true_distances_[tour_[pred_index]][visit];
+        arrivals_[visit] = departures_[tour_[pred_index]] + data_.distances_[tour_[pred_index]][visit];
         departures_[visit] =  departureTime(visit);
         // if next visit is not depot pull backward latest_departures
-        latest_departures_[visit] = (pred_index + 1 < start_positions_[route+1]) ?  min(data_.latest_departure_possible_[visit], latest_departures_[tour_[pred_index + 2]] - data_.true_distances_[visit][tour_[pred_index + 2]] - data_.service_time_[tour_[pred_index + 2]]) : data_.end_TW_[visit] + data_.service_time_[visit];
+        latest_departures_[visit] = (pred_index + 1 < start_positions_[route+1]) ?  min(data_.latest_departure_possible_[visit], latest_departures_[tour_[pred_index + 2]] - data_.distances_[visit][tour_[pred_index + 2]] - data_.service_time_[tour_[pred_index + 2]]) : data_.end_TW_[visit] + data_.service_time_[visit];
         // update start_position
         for (int j = route + 1; j <= n_routes_; ++j)
             ++start_positions_[j];
@@ -128,7 +143,7 @@ void Solution::insertCustomer(int route, int visit, int pred_index)
         // update arrival of rest of the route
         for (int j = pred_index + 2; j <start_positions_[route + 1]; ++j) {
             int current_visit = tour_[j];
-            arrivals_[current_visit] = departures_[tour_[j-1]] + data_.true_distances_[tour_[j - 1]][current_visit];
+            arrivals_[current_visit] = departures_[tour_[j-1]] + data_.distances_[tour_[j - 1]][current_visit];
             // if we still arrive before time windows then there is no need to modify the rest of the route
             if (arrivals_[current_visit] <= data_.start_TW_[current_visit])
                 break;
@@ -140,26 +155,26 @@ void Solution::insertCustomer(int route, int visit, int pred_index)
         for (int j = pred_index; j >= start_positions_[route]; --j ) {
             int current_visit = tour_[j];
             // if the latest departure does not have to be updated (it is still end_tw + serivce_time) then skip updating rest of the route
-            if (data_.latest_departure_possible_[current_visit] <= latest_departures_[tour_[j+1]] - data_.true_distances_[current_visit][tour_[j+1]] - data_.service_time_[tour_[j+1]])
+            if (data_.latest_departure_possible_[current_visit] <= latest_departures_[tour_[j+1]] - data_.distances_[current_visit][tour_[j+1]] - data_.service_time_[tour_[j+1]])
                 break;
             else
-                latest_departures_[current_visit] = latest_departures_[tour_[j+1]] - data_.true_distances_[current_visit][tour_[j+1]] - data_.service_time_[tour_[j+1]];
+                latest_departures_[current_visit] = latest_departures_[tour_[j+1]] - data_.distances_[current_visit][tour_[j+1]] - data_.service_time_[tour_[j+1]];
         }
 
 
         // update arrival time at depot
-        arrivals_[tour_[start_positions_[route + 1]]] = departures_[tour_[start_positions_[route + 1]-1]] + data_.true_distances_[tour_[start_positions_[route + 1]-1]][tour_[start_positions_[route + 1]]];
+        arrivals_[tour_[start_positions_[route + 1]]] = departures_[tour_[start_positions_[route + 1]-1]] + data_.distances_[tour_[start_positions_[route + 1]-1]][tour_[start_positions_[route + 1]]];
     }
 
     else { // add new route
         tour_.push_back(visit);
-        arrivals_[visit] = data_.start_TW_.back() + data_.true_distances_[tour_[0]][visit];
+        arrivals_[visit] = data_.start_TW_.back() + data_.distances_[tour_[0]][visit];
         departures_[visit] = departureTime(visit);
         latest_departures_[visit] = data_.latest_departure_possible_[visit]; // we can assume that a single visit route is feasible, therefore there would be enough time to get back at the depot
-        latest_departures_[tour_[start_positions_.back()]] = latest_departures_[visit] - data_.true_distances_[data_.depot_][visit] - data_.service_time_[visit];
+        latest_departures_[tour_[start_positions_.back()]] = latest_departures_[visit] - data_.distances_[data_.depot_][visit] - data_.service_time_[visit];
         tour_.push_back(data_.n_requests_+ (++n_routes_));
         start_positions_.push_back(tour_.size() - 1);
-        arrivals_.push_back(departures_[visit] + data_.true_distances_[visit][tour_[0]]);
+        arrivals_.push_back(departures_[visit] + data_.distances_[visit][tour_[0]]);
         departures_.push_back(0);
         latest_departures_.push_back(0);
     }
@@ -202,13 +217,13 @@ void Solution::removeCustomer(int route, int position) {
     else {
         // update arrival time of successors (including ending depot)
         for (int j = position; j <= start_positions_[route+1]; ++j) {
-            arrivals_[tour_[j]] = departures_[tour_[j - 1]] + data_.true_distances_[tour_[j - 1]][tour_[j]];
+            arrivals_[tour_[j]] = departures_[tour_[j - 1]] + data_.distances_[tour_[j - 1]][tour_[j]];
             departures_[tour_[j]] = departureTime(tour_[j]);
         }
         // update latest departure time of predecessors (including starting depot)
-        latest_departures_[tour_[position - 1]] = (position == start_positions_[route+1]) ? data_.latest_departure_possible_[tour_[position - 1]] : min(latest_departures_[tour_[position]] - data_.true_distances_[tour_[position - 1]][tour_[position]] - data_.service_time_[tour_[position]], data_.latest_departure_possible_[tour_[position-1]]);
+        latest_departures_[tour_[position - 1]] = (position == start_positions_[route+1]) ? data_.latest_departure_possible_[tour_[position - 1]] : min(latest_departures_[tour_[position]] - data_.distances_[tour_[position - 1]][tour_[position]] - data_.service_time_[tour_[position]], data_.latest_departure_possible_[tour_[position-1]]);
         for (int j = position - 2; j >= start_positions_[route]; --j)
-            latest_departures_[tour_[j]] = min(latest_departures_[tour_[j+1]] - data_.true_distances_[tour_[j]][tour_[j+1]] - data_.service_time_[tour_[j+1]], data_.latest_departure_possible_[tour_[j]]);
+            latest_departures_[tour_[j]] = min(latest_departures_[tour_[j+1]] - data_.distances_[tour_[j]][tour_[j+1]] - data_.service_time_[tour_[j+1]], data_.latest_departure_possible_[tour_[j]]);
     }
 }
 
@@ -250,10 +265,10 @@ void Solution::swapReversePaths(int route_1, int route_2, int start_path_1, int 
 
         // re set arrival/departure of route 2
         for (int i = new_start_path_2; i < start_positions_[route_2 + 1]; ++i) {
-            arrivals_[tour_[i]] = departures_[tour_[i - 1]] + data_.true_distances_[tour_[i - 1]][tour_[i]];
+            arrivals_[tour_[i]] = departures_[tour_[i - 1]] + data_.distances_[tour_[i - 1]][tour_[i]];
             departures_[tour_[i]] = departureTime(tour_[i]);
         }
-        arrivals_[tour_[start_positions_[route_2 + 1]]] = departures_[tour_[start_positions_[route_2 + 1]-1]] + data_.true_distances_[tour_[start_positions_[route_2 + 1] -1 ]][tour_[start_positions_[route_2 + 1]]];
+        arrivals_[tour_[start_positions_[route_2 + 1]]] = departures_[tour_[start_positions_[route_2 + 1]-1]] + data_.distances_[tour_[start_positions_[route_2 + 1] -1 ]][tour_[start_positions_[route_2 + 1]]];
 
         // re-set start_position of route_2
         start_positions_[route_2] += delta;
@@ -261,7 +276,7 @@ void Solution::swapReversePaths(int route_1, int route_2, int start_path_1, int 
         // re set latest departure time
         for (int i = new_end_path_2; i >= start_positions_[route_2]; --i)
             latest_departures_[tour_[i]] = min(data_.latest_departure_possible_[tour_[i]], (tour_[i+1] < data_.depot_ ? latest_departures_[tour_[i + 1]] - data_.service_time_[tour_[i + 1]]: data_.end_TW_.back()) -
-                                                                        data_.true_distances_[tour_[i]][tour_[i + 1]]);
+                                                                        data_.distances_[tour_[i]][tour_[i + 1]]);
     }
     else {
         // re-set start_position of route_2
@@ -283,8 +298,7 @@ void Solution::swapReversePaths(int route_1, int route_2, int start_path_1, int 
         latest_departures_.erase(latest_departures_.begin() + data_.n_requests_ + route_2 + 1);
 
         // adjust vectos for costs
-        routes_costs_.erase(routes_costs_.begin() + route_2);
-        routes_reduced_costs_.erase(routes_reduced_costs_.begin() + route_2);
+//        routes_costs_.erase(routes_costs_.begin() + route_2);
     }
 
 
@@ -299,14 +313,14 @@ void Solution::swapReversePaths(int route_1, int route_2, int start_path_1, int 
 
         // re set arrival/departure of route 1
         for (int i = new_start_path_1; i < start_positions_[route_1 + 1] - 1; ++i) {
-            arrivals_[tour_[i]] = departures_[tour_[i - 1]] + data_.true_distances_[tour_[i - 1]][tour_[i]];
+            arrivals_[tour_[i]] = departures_[tour_[i - 1]] + data_.distances_[tour_[i - 1]][tour_[i]];
             departures_[tour_[i]] = departureTime(tour_[i]);
         }
-        arrivals_[tour_[start_positions_[route_1 + 1]]] = departures_[tour_[start_positions_[route_1 + 1]-1]] + data_.true_distances_[tour_[start_positions_[route_1 + 1] -1 ]][tour_[start_positions_[route_1 + 1]]];
+        arrivals_[tour_[start_positions_[route_1 + 1]]] = departures_[tour_[start_positions_[route_1 + 1]-1]] + data_.distances_[tour_[start_positions_[route_1 + 1] -1 ]][tour_[start_positions_[route_1 + 1]]];
 
         for (int i = new_end_path_1; i >= start_positions_[route_1]; --i)
             latest_departures_[tour_[i]] = min(data_.latest_departure_possible_[tour_[i]],  (tour_[i+1] < data_.n_requests_ ? latest_departures_[tour_[i + 1]] - data_.service_time_[tour_[i + 1]] : data_.end_TW_.back()) -
-                                                                        data_.true_distances_[tour_[i]][tour_[i + 1]]);
+                                                                        data_.distances_[tour_[i]][tour_[i + 1]]);
     }
     else {
         tour_.erase(tour_.cbegin() + new_start_path_1);
@@ -322,8 +336,7 @@ void Solution::swapReversePaths(int route_1, int route_2, int start_path_1, int 
         latest_departures_.erase(latest_departures_.begin() + data_.n_requests_ + route_1 + 1);
 
         // adjust vectos for costs
-        routes_costs_.erase(routes_costs_.begin() + route_1);
-        routes_reduced_costs_.erase(routes_reduced_costs_.begin() + route_1);
+//        routes_costs_.erase(routes_costs_.begin() + route_1);
     }
 }
 
@@ -387,20 +400,7 @@ void Solution::computeCost(vector<Cost *> &cost_components_solution)
 /** ------------------------------------------------------------------------------------------------ */
 
 
-void Solution::computeRoutesCost(vector<Cost *> &cost_components_route, vector<int> routes_indexes)
-{
-    if (routes_indexes.size()) {
-        for (auto &index : routes_indexes)
-            routes_costs_[index] = 0;
-    }
-    else {
-        // (re-) initialize cost of routes (!! maybe this could be improved)
-        routes_costs_.clear();
-        routes_costs_.resize(n_routes_, 0);
-    }
-    for (auto &cost_source : cost_components_route)
-        cost_source->addRoutesCost(*this, routes_costs_, routes_indexes);
-}
+
 
 
 /** ------------------------------------------------------------------------------------------------ */
@@ -416,6 +416,7 @@ bool Solution::checkFeasibilitySolution()
         {
             route_load += data_.demands_[tour_[i]];
             assert((arrivals_[tour_[i]] <= data_.end_TW_[tour_[i]]) && ("arrival time after end of time window. position " + to_string(i) + " req " + to_string(tour_[i])).c_str());
+            assert(tour_[i]>= 0 && ("negative customer at position " + to_string(i) + "in tour_").c_str());
         }
         assert(route_load <= data_.capacity_*capacity_coefficient_ && ("route load exceed capacity" + to_string(route)).c_str());
     }
@@ -462,7 +463,7 @@ bool Solution::checkFeasibilitySolution()
 //                                             "departure-" + to_string(i));
 //            for (j = 0; j < points; ++j)
 //                if (i != j && data_.possible_arcs_[tour_[start_customers + i]][tour_[start_customers + j]])
-//                    flow_vars[i][j] = model.addVar(0.0, 1.0, data_.true_distances_[tour_[start_customers + i]][tour_[start_customers + j]], GRB_BINARY,
+//                    flow_vars[i][j] = model.addVar(0.0, 1.0, data_.distances_[tour_[start_customers + i]][tour_[start_customers + j]], GRB_BINARY,
 //                                                   "x-" + to_string(i) + "-" + to_string(j));
 //
 //
@@ -496,11 +497,11 @@ bool Solution::checkFeasibilitySolution()
 //            for (j = 0; j < points-1; ++j) {
 //                if (data_.possible_arcs_[tour_[start_customers + i]][tour_[start_customers + j]]) {
 //                    lhs += big_M*flow_vars[i][j];
-//                    model.addConstr(lhs, GRB_LESS_EQUAL, data_.end_TW_[tour_[start_customers + j]] + big_M - data_.true_distances_[tour_[start_customers + i]][tour_[start_customers + j]], "times-" + to_string(i) + "-" + to_string(j));
+//                    model.addConstr(lhs, GRB_LESS_EQUAL, data_.end_TW_[tour_[start_customers + j]] + big_M - data_.distances_[tour_[start_customers + i]][tour_[start_customers + j]], "times-" + to_string(i) + "-" + to_string(j));
 //                }
 //            }
 //            // Add time constraints to depot
-//            model.addConstr(lhs, GRB_LESS_EQUAL, data_.end_TW_.back() + big_M - data_.true_distances_[tour_[start_customers + i]][data_.depot_], "times-" + to_string(i) + "-0");
+//            model.addConstr(lhs, GRB_LESS_EQUAL, data_.end_TW_.back() + big_M - data_.distances_[tour_[start_customers + i]][data_.depot_], "times-" + to_string(i) + "-0");
 //        }
 //
 //
@@ -534,7 +535,7 @@ bool Solution::checkFeasibilitySolution()
 //                    if (solution[tsp_index][i] > 0.5) {
 //                        tour_[start_customers + j] = copy_route[i];
 //                        arrivals_[copy_route[i]] = departures_[tour_[j + start_positions_[route]]] +
-//                                                   data_.true_distances_[tour_[j + start_positions_[route]]][copy_route[i]];
+//                                                   data_.distances_[tour_[j + start_positions_[route]]][copy_route[i]];
 //                        departures_[copy_route[i]] = departureTime(copy_route[i]);
 //                        tsp_index = i;
 //                        break;
@@ -544,7 +545,7 @@ bool Solution::checkFeasibilitySolution()
 //
 //            // adjust latest departures
 //            for (i = start_positions_[route+1]-1; i >= start_positions_[route]; --i)
-//                latest_departures_[tour_[i]] = min(data_.latest_departure_possible_[tour_[i]], (indexIsDepot(i+1) ? data_.end_TW_.back() : (latest_departures_[tour_[i+1]] - data_.service_time_[tour_[i+1]])) - data_.true_distances_[tour_[i]][tour_[i+1]]);
+//                latest_departures_[tour_[i]] = min(data_.latest_departure_possible_[tour_[i]], (indexIsDepot(i+1) ? data_.end_TW_.back() : (latest_departures_[tour_[i+1]] - data_.service_time_[tour_[i+1]])) - data_.distances_[tour_[i]][tour_[i+1]]);
 //
 //
 //            // delete solution

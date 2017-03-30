@@ -14,7 +14,7 @@ Option<double> lambda("lambda", "lambda weight for inertion heuristic I1", 1);
 
 /** compute the cost of inserting visit bewteen predecessor and successor with the gives loss in departure time */
 double positionCost(int predecessor, int visit, int successor, double lost_departure_time, Data& data){
-    return alpha * (data.true_distances_[predecessor][visit] + data.true_distances_[visit][successor] - mu * data.true_distances_[predecessor][successor]) +
+    return alpha * (data.distances_[predecessor][visit] + data.distances_[visit][successor] - mu * data.distances_[predecessor][successor]) +
            (1 - alpha) * lost_departure_time;
 }
 
@@ -24,7 +24,7 @@ double positionCost(int predecessor, int visit, int successor, double lost_depar
 /** compute the cost of the insertion (only needed if we want a double criteria) */
 double insertionCost(int customer, double best_position_cost, int switcher, vector<double> *profits, Data& data) {
     if (switcher == 0)
-        return lambda * data.true_distances_[data.depot_][customer] - best_position_cost;
+        return lambda * data.distances_[data.depot_][customer] - best_position_cost;
     else
         return lambda * profits->at(customer) - best_position_cost;
 }

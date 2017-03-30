@@ -2,7 +2,9 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <iostream>
+#include <sstream>
 #include <cstdlib>
 #include <typeinfo>
 #include <type_traits>
@@ -10,7 +12,7 @@
 /** Helper functions for parsing. */
 
 template <typename T>
-static typename std::enable_if<std::is_integral<T>::value, T>::type parse_t(const std::string& l)
+static typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value, T>::type parse_t(const std::string& l)
 {
   return std::atoll(l.c_str());
 }
@@ -38,7 +40,7 @@ static typename std::enable_if<std::is_same<T, std::string>::value, T>::type par
 /** Helper functions for printing. */
 
 template <typename T>
-static std::ostream& print_t(const typename std::enable_if<std::is_integral<T>::value, T>::type& v, std::ostream& os = std::cout)
+static std::ostream& print_t(const typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value, T>::type& v, std::ostream& os = std::cout)
 {
   return os << "[int, default: " << v << "]";
 }
@@ -94,7 +96,12 @@ protected:
   parameter in a global list of parameters (accessible by CLI) */
   BaseOption(const std::string& name, const std::string& description);
 
-  /** Destructor, unregisters parameter from the global list of parameters */
+  /** Destructor, unregisters parameter from the global list of parameters
+   *  (actually not anymore, becase it was a dumb thing to do, as hierarchy
+   *  of classes owning parameters would cause the same parameter to be
+   *  erased twice). Moreover, it is not particularly useful to unload
+   *  parameters.
+   */
   virtual ~BaseOption();
 
   /** Name of the option (for indexing) */
@@ -130,14 +137,7 @@ public:
     const std::string& name,
     const std::string& description,
     const T& default_val
-  ) :
-    BaseOption(name, description),
-    _val(default_val)
-  {
-    if (name == "help")
-      throw std::runtime_error("Invalid name for option (reserved keyword): " + name);
-    _set = false;
-  }
+  );
 
   /** Automatic cast to base type */
   operator T() const
@@ -173,6 +173,19 @@ public:
     return _set;
   }
 
+  template <typename O = T>
+  bool operator==(const O& o) const
+  {
+    return T(o) == _val;
+  }
+
+  operator const char* () const
+  {
+    std::stringstream ss;
+    ss << this->_val;
+    return ss.str().c_str();
+  }
+
 protected:
 
   /** Value of the parameter */
@@ -206,10 +219,13 @@ public:
   static void parse(int, char**);
 
   /** Register parameter */
-  Options& add(BaseOption* o);
+  void add(BaseOption* o);
 
   /** Unregister parameter */
-  Options& remove(BaseOption* o);
+  void remove(BaseOption* o);
+
+  /** Check if a value has been parsed. */
+  void check_value(BaseOption* o);
 
   /** Set prefix of the options (default is --) */
   static void set_prefix(const std::string& s);
@@ -223,10 +239,16 @@ public:
   /** Fetches an option by name (static). */
   static const BaseOption& get(const std::string& key);
 
+  /** Checks whether a helper has been requested. */
+  static void help_if_requested();
+
 protected:
 
   /** Map of registered parameters (for printing instructions) */
-  std::map<std::string, BaseOption*> _opts;
+  std::map<std::string, std::vector<BaseOption*>> _opts;
+
+  /** Store values, so that we don't have to run parse multiple times. */
+  std::map<std::string, std::string> _vals;
 
   /** Name of the executable. */
   std::string _executable;
@@ -237,10 +259,26 @@ protected:
   /** Prefix */
   static std::string _prefix;
 
+  /** Help requested. */
+  static bool _help_requested;
+
+  static bool _parsed;
+
   /** Hidden default constructor */
   Options() = default;
 
 };
+
+template <typename T>
+Option<T>::Option(const std::string &name, const std::string &description, const T &default_val) :
+  BaseOption(name, description),
+  _val(default_val)
+{
+  if (name == "help")
+    throw std::runtime_error("Invalid name for option (reserved keyword): " + name);
+  _set = false;
+  Options::get().check_value(this);
+}
 
 /** Output operator for base option (for dispatching to specialized objects) */
 std::ostream& operator<< (std::ostream& os, const BaseOption& o);
