@@ -49,8 +49,9 @@ public:
 
     void printOuput();
 
-    /** write move info */
+    /** move info */
     void writeMoveInfo();
+    void recordMoveInfo();
 
     /** to inspect clusterisation */
     void createClusterisation();
@@ -153,6 +154,7 @@ public:
     vector<double> cost_history_;
 
     /** the solution before the move is performed (only used for inspection) */
+    Solution initial_solution_;
     Solution old_solution_;
 
     /** the complete evolution of duals */
@@ -160,6 +162,10 @@ public:
 
     /** print stuff */
     ofstream moves_out_file_;
+
+    /** moves info */
+    int moves_with_route_deletion_;
+    vector<int> moves_path_lenght_;
 
 };
 

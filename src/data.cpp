@@ -92,7 +92,7 @@ Data::Data(string problem_file_name) {
 
 
     // CREATE MATRIX OF DISTANCES
-    possible_arcs_.resize(n_requests_ + max_vehicles_, vector<bool>(n_requests_ + max_vehicles_, false));
+    possible_arcs_.resize(n_requests_ + max_vehicles_, vector<bool>(n_requests_ + max_vehicles_, true));
     int j;
     for (i = 0; i < n_requests_ + max_vehicles_; ++i){
         vector<double> true_column;
@@ -101,8 +101,6 @@ Data::Data(string problem_file_name) {
             if (i != j) {
                 true_column.push_back(computeDistance(x_coord_[i], y_coord_[i], x_coord_[j], y_coord_[j]));
                 modified_column.push_back(true_column.back() + service_time_[i]);
-                if ((start_TW_[i] + service_time_[i] + true_column[j]) <= end_TW_[j])
-                    possible_arcs_[i][j] = true;
             }
             else {
                 true_column.push_back(0);
@@ -112,6 +110,13 @@ Data::Data(string problem_file_name) {
         distances_.push_back(true_column);
         distances_service_.push_back(modified_column);
     }
+
+    // FILTER ARCS
+    for (i = 0; i < n_requests_ + max_vehicles_; ++i)
+        for (j = 0; j < n_requests_ + max_vehicles_; ++j)
+            if (i == j or (start_TW_[i] + service_time_[i] + distances_[i][j]) > end_TW_[j] or demands_[i] + demands_[j] > capacity_ or (start_TW_[i] + service_time_[i] + distances_[i][j] + service_time_[j] + distances_[j][depot_]) > end_TW_.back())
+                possible_arcs_[i][j] = false;
+
 
 
     // COMPUTE OTHER STATISTICS

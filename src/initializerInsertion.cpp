@@ -96,9 +96,13 @@ Solution InitializerInsertion::initializeSolution()
                 // look for best insertion position
                 for (int position = solution.tour_.size() - 2; position >= solution.start_positions_[solution.n_routes_ -1]; --position ) {
                     predecessor = solution.tour_[position];
-                    arrival_time_visit = solution.departures_[predecessor] + data_.distances_[predecessor][customer];
 
-                    // check arrival time at cutomer
+                    // if arc cannot be in optimal solution
+                    if (not data_.possible_arcs_[predecessor][customer])
+                        continue;
+
+                    // check arrival time at customer
+                    arrival_time_visit = solution.departures_[predecessor] + data_.distances_[predecessor][customer];
                     if (arrival_time_visit > data_.end_TW_[customer])
                         continue;
 

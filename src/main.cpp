@@ -14,11 +14,15 @@
 #include "options.h"
 #include "initializerMultipleRoutes.h"
 #include "lateAcceptanceSteepestDescent.h"
+#include <ctime>
 
 
 int main(int argc, char **argv) {
 
     using namespace std;
+
+    // start measuring time
+    clock_t begin = clock();
 
     /** ======================================================
      * DECLARE PARAMETERS
@@ -115,8 +119,14 @@ int main(int argc, char **argv) {
     * RUN METAHEURISTIC
     * ====================================================== */
 
-//    algorithm.reset();
+    // end measuring time
+    clock_t end = clock();
+    double time_preparing = double(end - begin) / CLOCKS_PER_SEC;
+
+    // run algorithm
     algorithm.run();
+    cout << endl;
+    cout << "Time Preparing       = " << time_preparing << endl;
     algorithm.printOuput();
 
 }

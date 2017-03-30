@@ -87,9 +87,13 @@ Solution InitializerMultipleRoutes::initializeSolution()
                     if (predecessor >= data_.depot_)
                         predecessor = data_.depot_;
 
-                    arrival_time_visit = solution.departures_[predecessor] + data_.distances_[predecessor][customer];
+                    // if arc cannot be in optimal solution
+                    if (not data_.possible_arcs_[predecessor][customer])
+                        continue;
 
-                    // chekc arrival time at cutomer
+
+                    // check arrival time at customer
+                    arrival_time_visit = solution.departures_[predecessor] + data_.distances_[predecessor][customer];
                     if (arrival_time_visit > data_.end_TW_[customer])
                         continue;
 

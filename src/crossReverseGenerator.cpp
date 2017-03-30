@@ -147,7 +147,7 @@ bool CrossReverseGenerator::next() {
             if (feasibility_to_path_2_standard_ and max(current_solution_-> departures_[visit_i_] + data_.distances_[visit_i_][visit_succ_k_], data_.start_TW_[visit_succ_k_]) + data_.service_time_[visit_succ_k_] > path_latest_departure_standard_[tour_index_k_ + 1][l_] )
                 feasibility_to_path_2_standard_ = false;
             // reversed
-            if (feasibility_to_path_2_reversed_ and max(current_solution_-> departures_[visit_i_] + data_.distances_[visit_i_][visit_l_], data_.start_TW_[visit_l_]) + data_.service_time_[visit_l_]  > path_latest_departure_reversed_[tour_index_k_ + 1][l_] )
+            if (feasibility_to_path_2_reversed_ and max(current_solution_-> departures_[visit_i_] + data_.distances_[visit_i_][visit_l_], data_.start_TW_[visit_l_]) + data_.service_time_[visit_l_] > path_latest_departure_reversed_[tour_index_k_ + 1][l_] )
                 feasibility_to_path_2_reversed_ = false;
 
 
@@ -270,8 +270,15 @@ bool CrossReverseGenerator::next() {
             }
 
             // FEASIBILITY VARIABLES
-            feasibility_to_path_1_standard_ = true;
-            feasibility_to_path_1_reversed_ = true;
+            // if the arc (k, i+1) is not feasible, path 1 will never be feasible, regardless if we increase j_ or l_
+            if (data_.possible_arcs_[current_solution_->tour_[tour_index_k_]][current_solution_->tour_[tour_index_i_+1]]) {
+                feasibility_to_path_1_standard_ = true;
+                feasibility_to_path_1_reversed_ = true;
+            }
+            else {
+                feasibility_to_path_1_standard_ = false;
+                feasibility_to_path_1_reversed_ = false;
+            }
             feasibility_route_2_reversed_ = false;
             feasibility_route_2_standard_ = false;
             feasibility_route_1_standard_ = false;
@@ -279,8 +286,8 @@ bool CrossReverseGenerator::next() {
 
 
             // path 1 is non existing as we initialized j_ = i_
-            // path_2 check
-            if (max(current_solution_->departures_[visit_i_] + data_.distances_[visit_i_][visit_succ_k_], data_.start_TW_[visit_succ_k_])  + data_.service_time_[visit_succ_k_] > path_latest_departure_standard_[tour_index_k_ + 1][1] ) {
+            // path_2 check (if the arc (i, k+1) is not possible or we can't get to k+1 in time, path_2 is not reachable from i_
+            if ((not data_.possible_arcs_[current_solution_->tour_[tour_index_i_]][current_solution_->tour_[tour_index_k_+1]]) or max(current_solution_->departures_[visit_i_] + data_.distances_[visit_i_][visit_succ_k_], data_.start_TW_[visit_succ_k_])  + data_.service_time_[visit_succ_k_] > path_latest_departure_standard_[tour_index_k_ + 1][1] ) {
                 feasibility_to_path_2_standard_ = false;
                 feasibility_to_path_2_reversed_ = false;
                 continue;
@@ -324,17 +331,15 @@ bool CrossReverseGenerator::next() {
             feasibility_route_2_reversed_ = false;
             feasibility_route_2_standard_ = false;
 
-            // both
-            if (max(current_solution_->departures_[visit_k_] + data_.distances_[visit_k_][visit_succ_i_], data_.start_TW_[visit_succ_i_])  + data_.service_time_[visit_succ_i_] > path_latest_departure_standard_[tour_index_i_ + 1][1]) {
+            // if the arc (k, i+1) is not possible or we can't get to i+1 in time, path_1 is not reachable from k_
+            if ((not data_.possible_arcs_[current_solution_->tour_[tour_index_k_]][current_solution_->tour_[tour_index_i_+1]]) or max(current_solution_->departures_[visit_k_] + data_.distances_[visit_k_][visit_succ_i_], data_.start_TW_[visit_succ_i_])  + data_.service_time_[visit_succ_i_] > path_latest_departure_standard_[tour_index_i_ + 1][1]) {
                 feasibility_to_path_1_standard_ = false;
                 feasibility_to_path_1_reversed_ = false;
-//                start_l_index_[i_ + 1][i_ + 1][k_] = l_;
                 continue;
             }
             else {
                 feasibility_to_path_1_standard_ = true;
                 feasibility_to_path_1_reversed_ = true;
-//                start_l_index_[i_ + 1][i_ + 1][k_] = 0;
             }
         }
 

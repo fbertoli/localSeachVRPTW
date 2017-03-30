@@ -17,6 +17,7 @@ LateAcceptanceSteepestDescent::LateAcceptanceSteepestDescent(Data &data, Initial
         data_(data),
         current_solution_(data),
         old_solution_(data),
+        initial_solution_(data),
         best_solution_(data),
         initializer_(initializer),
         cost_components_solution_(cost_components_solution),
@@ -37,8 +38,9 @@ LateAcceptanceSteepestDescent::LateAcceptanceSteepestDescent(Data &data, Initial
 {
     best_solution_cost_ = 10000000;
     clusterisation_.resize(data_.n_requests_,0);
-    moves_out_file_.open (data_.name_+ "-moves.txt");
+//    moves_out_file_.open (data_.name_+ "-moves.txt");
     cost_history_.clear();
+    moves_path_lenght_.resize(10,0);
 };
 
 
@@ -47,7 +49,7 @@ LateAcceptanceSteepestDescent::LateAcceptanceSteepestDescent(Data &data, Initial
 
 LateAcceptanceSteepestDescent::~LateAcceptanceSteepestDescent() {
     // close moves file
-    moves_out_file_.close();
+//    moves_out_file_.close();
 }
 
 /** ------------------------------------------------------------------------------------------------ */
@@ -116,11 +118,11 @@ void LateAcceptanceSteepestDescent::run()
 
     // ASSER AND WRITE (only debug)
     assert(current_solution_.checkFeasibilitySolution() && "Initial solution is not feasible");
-    current_solution_.write("initial-run.txt", cost_components_solution_);
+    current_solution_.write("output-initial-run.txt", cost_components_solution_);
 
     // HISTORY VARAIBLES
     cost_history_.push_back(current_solution_.cost_);
-    old_solution_ = current_solution_;
+    initial_solution_ = current_solution_;
 
 
     // MEMORY OF COST (for acceptance)
@@ -184,6 +186,7 @@ void LateAcceptanceSteepestDescent::run()
 //            routes_pool_.extractRoutes(current_solution_, routes_indexes_);
 
             // write move info and assign old solution (only for inspection)
+            recordMoveInfo();
 //            writeMoveInfo();
 //            old_solution_ = current_solution_;
 
@@ -200,13 +203,13 @@ void LateAcceptanceSteepestDescent::run()
 
 
     // solve SPP integer model
-    routes_pool_.createIntegerModel();
-    routes_pool_.updateIntegerModel();
-    routes_pool_.optimizeIntegerModel(100);
+//    routes_pool_.createIntegerModel();
+//    routes_pool_.updateIntegerModel();
+//    routes_pool_.optimizeIntegerModel(100);
 //    routes_pool_.integer_model_.write("integer-model.lp");
-    routes_pool_.updateIntegerSolution();
-    routes_pool_.solution_.write("best-solution-mip.txt", cost_components_solution_);
-    ofstream out_file;
+//    routes_pool_.updateIntegerSolution();
+//    routes_pool_.solution_.write("output-best-solution-mip.txt", cost_components_solution_);
+//    ofstream out_file;
 //    out_file.open("integer-model-vars.txt");
 //    for (int r = 0; r < routes_pool_.routes_.size(); ++r) {
 //        out_file << "route-" << r << " : dep  ->  ";
@@ -229,22 +232,22 @@ void LateAcceptanceSteepestDescent::run()
 /** ------------------------------------------------------------------------------------------------ */
 
 void LateAcceptanceSteepestDescent::printOuput() {
-    cout << endl;
-    try {
-        cout << "MIP Solution Cost    = " << routes_pool_.integer_model_.get(GRB_DoubleAttr_ObjVal) << endl;
-    } catch (GRBException e) {
-        cout << "No MIP Solution found Error number: " << e.getErrorCode() << endl;
-        cout << e.getMessage() << endl;
-    } catch (...) {
-        cout << "Error during optimization" << endl;
-    }
-    cout << "MIP Gap              = " << routes_pool_.integer_model_.get(GRB_DoubleAttr_MIPGap) << endl;
+    cout << "Time                 = " << time_ << endl;
+    cout << "Initial Sol Cost     = " << initial_solution_.cost_ << endl;
+    cout << "Initial Sol Routes   = " << initial_solution_.n_routes_ << endl;
     cout << "Best Solution Cost   = " << best_solution_cost_ << endl;
     cout << "Best Solution Routes = " << best_solution_.n_routes_ << endl;
     cout << "Iterations           = " << iteration_ << endl;
     cout << "Idle Iterations      = " << idle_iteration_ << endl;
     cout << "# solutions accepted = " << cost_history_.size() << endl;
-    cout << "Time                 = " << time_ << endl;
+    cout << endl;
+    cout << "Moves with route del = " << moves_with_route_deletion_ << " (" << 100*double(moves_with_route_deletion_)/iteration_ << " %)" << endl;
+    cout << "Moves path lenght    = ";
+
+    for (int i = 0; i < moves_path_lenght_.size(); ++i)
+        cout << i << " = " << moves_path_lenght_[i] << "  (" << 100*double(moves_path_lenght_[i])/iteration_ << "%),  ";
+    cout << endl;
+    cout << endl;
     cout << "Cost Evolution" << endl;
     for (auto const & el : cost_history_)
         cout << el << ", ";
@@ -259,6 +262,17 @@ void LateAcceptanceSteepestDescent::printOuput() {
 // ////////////////////////////////////////////////
 // MOVE INFO
 // ////////////////////////////////////////////////
+
+void LateAcceptanceSteepestDescent::recordMoveInfo() {
+    CrossReverseMove &move = static_cast<CrossReverseMove&>(*best_move_);
+    if (move.route_removed_)
+        ++moves_with_route_deletion_;
+    ++moves_path_lenght_[move.j_ - move.i_];
+    ++moves_path_lenght_[move.k_ - move.l_];
+}
+
+/** ------------------------------------------------------------------------------------------------ */
+
 
 void LateAcceptanceSteepestDescent::writeMoveInfo() {
     CrossReverseMove &move = static_cast<CrossReverseMove&>(*best_move_);
