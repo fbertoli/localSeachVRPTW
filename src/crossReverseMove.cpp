@@ -5,6 +5,12 @@
 #include "crossReverseMove.h"
 #include "data.h"
 
+
+
+/** ------------------------------------------------------------------------------------------------ */
+
+
+
 CrossReverseMove& CrossReverseMove::operator= (const CrossReverseMove &other_move) {
     i_ = other_move.i_;
     j_ = other_move.j_;
@@ -19,6 +25,10 @@ CrossReverseMove& CrossReverseMove::operator= (const CrossReverseMove &other_mov
     route_removed_ = other_move.route_removed_;
     return *this;
 }
+
+
+/** ------------------------------------------------------------------------------------------------ */
+
 
 void CrossReverseMove::setMoveVariables(int i, int j, int k, int l, int route_1, int route_2, bool reverse_path_1, bool reverse_path_2)
 {
@@ -59,3 +69,102 @@ void CrossReverseMove::saveModifiedRoutesIndexes(Solution &solution, vector<int>
     else
         routes.push_back(route_2_ - 1);
 }
+
+
+/** ------------------------------------------------------------------------------------------------ */
+
+
+void CrossReverseMove::identifyAddedArcs(Solution &solution, vector<pair<int,int>> &new_arcs) {
+    new_arcs.clear();
+    if (k_ < l_) {
+        if (not reverse_path_2_) {
+            new_arcs.push_back(make_pair(solution.tour_[i_], solution.tour_[k_ + 1]));
+            new_arcs.push_back(make_pair(solution.tour_[l_], solution.tour_[j_ + 1]));
+        }
+        else {
+            new_arcs.push_back(make_pair(solution.tour_[i_], solution.tour_[l_]));
+            new_arcs.push_back(make_pair(solution.tour_[k_ + 1], solution.tour_[j_ + 1]));
+        }
+    }
+
+    // add arcs of path 1
+    if (i_ < j_) {
+        if (not reverse_path_1_) {
+            new_arcs.push_back(make_pair(solution.tour_[k_], solution.tour_[i_ + 1]));
+            new_arcs.push_back(make_pair(solution.tour_[j_], solution.tour_[l_ + 1]));
+        }
+        else {
+            new_arcs.push_back(make_pair(solution.tour_[k_], solution.tour_[j_]));
+            new_arcs.push_back(make_pair(solution.tour_[i_ + 1], solution.tour_[l_ + 1]));
+        }
+    }
+}
+
+/** ------------------------------------------------------------------------------------------------ */
+
+
+//void CrossReverseMove::addArc(pair<int,int> arc) {
+//    if ((*forbidden_arcs_)[arc.first][arc.second] > 0)
+//        new_tabu_arcs_.push_back(arc);
+//    else
+//        new_arcs_.push_back(arc);
+//}
+
+
+/** ------------------------------------------------------------------------------------------------ */
+//
+//
+//void CrossReverseMove::updateForbiddenArcs(Solution &solution, int tabu_duration) {
+//    new_arcs_.clear();
+//    new_tabu_arcs_.clear();
+//
+//    // add arcs of path 2
+//    pair<int, int> arc;
+//    if (k_ < l_) {
+//        if (not reverse_path_2_) {
+//            addArc(make_pair(solution.tour_[i_], solution.tour_[k_ + 1]));
+//            addArc(make_pair(solution.tour_[l_], solution.tour_[j_ + 1]));
+//        }
+//        else {
+//            addArc(make_pair(solution.tour_[i_], solution.tour_[l_]));
+//            addArc(make_pair(solution.tour_[k_ + 1], solution.tour_[j_ + 1]));
+//        }
+//    }
+//
+//    // add arcs of path 1
+//    if (i_ < j_) {
+//        if (not reverse_path_1_) {
+//            addArc(make_pair(solution.tour_[k_], solution.tour_[i_ + 1]));
+//            addArc(make_pair(solution.tour_[j_], solution.tour_[l_ + 1]));
+//        }
+//        else {
+//            addArc(make_pair(solution.tour_[k_], solution.tour_[j_]));
+//            addArc(make_pair(solution.tour_[i_ + 1], solution.tour_[l_ + 1]));
+//        }
+//    }
+//
+//
+//    // update status of new_tabu_arcs_
+//    for (auto &arc : new_tabu_arcs_)
+//        (*forbidden_arcs_)[arc.first][arc.second] = tabu_duration + 1;
+//
+//
+//    // update tabu status of arcs in forbidden_list_
+//    for (vector<pair<int,int>>::iterator iter = (*forbidden_list_).begin(); iter != (*forbidden_list_).end();) {
+//        if ((*forbidden_arcs_)[(*iter).first][(*iter).second] > 0) {
+//            --(*forbidden_arcs_)[(*iter).first][(*iter).second];
+//            ++iter;
+//        }
+//        else
+//            iter = (*forbidden_list_).erase(iter);
+//    }
+//
+//
+//    // add new arcs
+//    for (auto &el : new_arcs_) {
+//        (*forbidden_arcs_)[el.first][el.second] = tabu_duration;
+//        (*forbidden_list_).push_back(el);
+//    }
+//
+//}
+//

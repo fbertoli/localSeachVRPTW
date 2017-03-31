@@ -7,6 +7,7 @@
 
 #include "move.h"
 #include "solution.h"
+#include <utility>
 
 class Cost;
 
@@ -19,10 +20,9 @@ class CrossReverseMove : public Move{
 
     /** CONSTRUCTORS - ASSIGNMENT*/
 public:
-    CrossReverseMove(int i, int j, int k, int l) :
-            i_(i), j_(j), l_(l), k_(k) {};
-
     CrossReverseMove() {};
+
+    CrossReverseMove(int i, int j, int k, int l) :  i_(i), j_(j), l_(l), k_(k) {};
 
     CrossReverseMove& operator= (const CrossReverseMove &other_move);
 
@@ -43,6 +43,18 @@ public:
 
     /** save the indexes of the new routes in the new solution (solution here is the one before the move is performed) */
     virtual void saveModifiedRoutesIndexes(Solution &solution, vector<int> &routes);
+
+    /** pushback arcs that move is adding */
+    virtual void identifyAddedArcs(Solution &solution, vector<pair<int,int>> &new_arcs);
+
+
+//    /** update the forbidden list/arcs */
+//    virtual void updateForbiddenArcs(Solution &solution, int tabu_duration);
+//
+//private:
+//    /** utility functio to add arcs to the correct list */
+//    void addArc(pair<int,int> arc);
+
 
 
     /** VARIABLES */

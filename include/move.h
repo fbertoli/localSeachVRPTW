@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 
 class Solution;
@@ -18,8 +19,8 @@ class Move {
 //public:
 //    virtual  Move& operator= (const Move &other_move);
 
+    /** METHODS */
 public:
-
     /** needed to compute delta of the move */
     virtual double computeCost(Solution &solution, Cost *cost) = 0;
 
@@ -34,6 +35,26 @@ public:
      * If a route is deleted it simply doesn't add it */
     virtual void saveModifiedRoutesIndexes(Solution &solution, vector<int> &routes) = 0;
 
+    /** change the pointers  */
+//    void setForbiddenListPntr(vector<pair<int,int>> *forbidden_list) {forbidden_list_ = forbidden_list;}
+//    void setForbiddenArcsPntr(vector<vector<int>> *forbidden_arcs) {forbidden_arcs = forbidden_arcs;}
+
+    /** add arcs (relative to solution) that move is adding */
+    virtual void identifyAddedArcs(Solution &solution, vector<pair<int,int>> &new_arcs) = 0;
+
+//
+//    /** VARIABLES */
+//public:
+//    /** the forbidden arcs */
+//    vector<vector<int>> *forbidden_arcs_;
+//
+//    /** the list of currently forbidden arcs */
+//    vector<pair<int,int>> *forbidden_list_;
+//
+//    /** whther the move is tabu */
+//    bool is_tabu_;
+
 };
+
 
 #endif //LOCALSEARCH_MOVE_H

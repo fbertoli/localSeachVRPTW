@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <ctime>
 #include "data.h"
 #include "solution.h"
 #include "initializerInsertion.h"
@@ -14,7 +15,8 @@
 #include "options.h"
 #include "initializerMultipleRoutes.h"
 #include "lateAcceptanceSteepestDescent.h"
-#include <ctime>
+#include "tabuSearch.h"
+
 
 
 int main(int argc, char **argv) {
@@ -81,18 +83,21 @@ int main(int argc, char **argv) {
 
 
     // CREATE METAHEURISTIC
-    LateAcceptanceSteepestDescent algorithm(data, initializer, cost_components_solution, cost_components_route, moves, best_moves, generators);
+    LateAcceptanceSteepestDescent LASD(data, initializer, cost_components_solution, cost_components_route, moves, best_moves, generators);
+    TabuSearch TS(data, initializer, cost_components_solution, cost_components_route, moves, best_moves, generators);
+    Metaheuristic *metaheuristic;
 
 
     /** ======================================================
     * PARSE OPTIONS
     * ====================================================== */
     Option<int> initializer_code("init", "heuristic to initialize solution. 0 = insertionI1, 1 = multipleRoutes", 0);
-    Option<int> metaheuristic_code("m", "metaheuristic", 0);
+    Option<string> metaheuristic_code("m", "metaheuristic", "tabu");
     Option<double> capacity_coeff_initializer_("init-cap", "capacity coefficient in the initialization procedure", 1);
     Options::parse(argc, argv);
 
 
+    // choose later because you need to create stuff before parsing options
 
     /** ======================================================
      * CHOOSE INITIALIZER
@@ -106,13 +111,17 @@ int main(int argc, char **argv) {
         initializer = &multiple_routes;
 
 
-    algorithm.initializer_ = initializer;
-
 
     /** ======================================================
      * CHOOSE METAHEURISTIC
      * ====================================================== */
 
+    if (metaheuristic_code == "tabu")
+        metaheuristic = &TS;
+    else
+        metaheuristic = &LASD;
+
+    metaheuristic->initializer_ = initializer;
 
 
     /** ======================================================
@@ -124,9 +133,8 @@ int main(int argc, char **argv) {
     double time_preparing = double(end - begin) / CLOCKS_PER_SEC;
 
     // run algorithm
-    algorithm.run();
+    metaheuristic -> run();
     cout << endl;
-    cout << "Time Preparing       = " << time_preparing << endl;
-    algorithm.printOuput();
+    metaheuristic -> printOuput();
 
 }

@@ -11,7 +11,7 @@
 #include "gurobi_c++.h"
 #include "routes.h"
 #include "metaheuristic.h"
-
+#include <utility>
 
 /** This class implements a LateAcceptanceSteepestDescent metaheuristic. Given a set of neighborhood it explores
  * them exhaustively and choose the best move.
@@ -21,13 +21,13 @@
 using namespace std;
 
 
-class LateAcceptanceSteepestDescent : public Metaheuristic
+class TabuSearch : public Metaheuristic
 {
     /** CONSTRUCTORS */
 public:
-    LateAcceptanceSteepestDescent(Data &data, Initializer *initializer, vector<Cost*> &cost_components_solution, vector<Cost*> &cost_components_route, vector<Move*> &moves,  vector<Move*> &best_moves, vector<MoveGenerator*> &generator);
+    TabuSearch(Data &data, Initializer *initializer, vector<Cost*> &cost_components_solution, vector<Cost*> &cost_components_route, vector<Move*> &moves,  vector<Move*> &best_moves, vector<MoveGenerator*> &generator);
 
-    ~LateAcceptanceSteepestDescent();
+    ~TabuSearch();
 
     /** METHODS */
 protected:
@@ -58,7 +58,14 @@ public:
     void createClusterisation();
     void updateClusterisation();
 
+    /** make metaheursitic ready to start again */
     void reset();
+
+    /** update the forbidden list/arcs */
+    void updateForbiddenArcs();
+
+    /** check if any added arc is tabu */
+    bool isMoveTabu();
 
 
 
@@ -74,29 +81,15 @@ public:
     /** the indexes of the new routes in the solution after the move is performed */
     vector<int> routes_indexes_;
 
-    /** cost of last length_memory solution */
-    vector<double> cost_memory_;
-
-    /** how many solution to record */
-    Option<int> length_memory_;
-
     /** the current solution */
     Solution current_solution_;
 
-     /** how many time I ran the algorithm */
-    int run_;
+    /** the current iteration number */
+    int iteration_;
 
-    /** the number of dile iteration (in a row)*/
-    int idle_iteration_;
-
-    /** maximum number of iterations*/
+       /** maximum number of iterations*/
     Option<int> max_iterations_;
 
-    /** max number of idle iterations*/
-    Option<int> max_idle_iterations_;
-
-    /** number of runs of the main search */
-    Option<int> runs;
 
     /** the best delta found so far in the current iteration */
     double best_delta_;
@@ -107,11 +100,23 @@ public:
     /** time spent in the initialization + search */
     double time_;
 
-    /** if the routes were destroyed by the move */
-    bool route_1_still_exists_;
-    bool route_2_still_exists_;
+
+    /** ------------------------------------------------------------------
+     *                     TABU VARIABLES
+     *  ------------------------------------------------------------------*/
+
+    /** matrix to keep memory of forbidden arcs and how long they will remain forbidden */
+    vector<vector<int>> forbidden_arcs_;
+
+    /** list recording which arcs are currently forbidden, so that it is easy to update their taboo status in the matrix */
+    vector<pair<int, int>> forbidden_list_;
+
+    /** minimum/maximum iterations one arc remains tabu */
+    Option<int> min_tabu_iterations_, max_tabu_iterations_;
 
 
+    /** the arcs the move is adding */
+    vector<pair<int, int>> new_arcs_;
 
 
     /** ------------------------------------------------------------------
@@ -124,15 +129,15 @@ public:
     Solution initial_solution_;
     Solution old_solution_;
 
-    /** the complete evolution of duals */
-    vector<vector<double>> dual_vars_complete_history_;
-
     /** print stuff */
     ofstream moves_out_file_;
 
     /** moves info */
+    bool is_best_move_tabu_;
     int moves_with_route_deletion_;
     vector<int> moves_path_lenght_;
+    int moves_tabu_;
+    double moves_non_improving_;
 
 };
 
