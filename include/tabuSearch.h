@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <utility>
 #include "solution.h"
 #include "data.h"
 #include "options.h"
@@ -11,7 +12,7 @@
 #include "gurobi_c++.h"
 #include "routes.h"
 #include "metaheuristic.h"
-#include <utility>
+
 
 /** This class implements a LateAcceptanceSteepestDescent metaheuristic. Given a set of neighborhood it explores
  * them exhaustively and choose the best move.
@@ -52,6 +53,7 @@ public:
 
     /** move info */
     void writeMoveInfo();
+    void writeArcsInfo();
     void recordMoveInfo();
 
     /** to inspect clusterisation */
@@ -115,7 +117,8 @@ public:
     Option<int> min_tabu_iterations_, max_tabu_iterations_;
 
 
-    /** the arcs the move is adding */
+    /** the arcs the move is removing/adding */
+    vector<pair<int, int>> removed_arcs_;
     vector<pair<int, int>> new_arcs_;
 
 

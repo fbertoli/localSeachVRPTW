@@ -44,7 +44,10 @@ public:
     /** save the indexes of the new routes in the new solution (solution here is the one before the move is performed) */
     virtual void saveModifiedRoutesIndexes(Solution &solution, vector<int> &routes);
 
-    /** pushback arcs that move is adding */
+    /** add arcs (relative to solution) to removed_arcs that move is adding */
+    virtual void identifyRemovedArcs(Solution &solution, vector<pair<int,int>> &removed_arcs);
+
+    /** add arcs (relative to solution) to new_arcs_ that move is adding */
     virtual void identifyAddedArcs(Solution &solution, vector<pair<int,int>> &new_arcs);
 
 

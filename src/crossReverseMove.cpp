@@ -74,6 +74,23 @@ void CrossReverseMove::saveModifiedRoutesIndexes(Solution &solution, vector<int>
 /** ------------------------------------------------------------------------------------------------ */
 
 
+void CrossReverseMove::identifyRemovedArcs(Solution &solution, vector<pair<int,int>> &removed_arcs) {
+    removed_arcs.clear();
+
+    removed_arcs.push_back(make_pair(solution.tour_[i_], solution.tour_[i_ + 1]));
+    if (i_ < j_)
+        removed_arcs.push_back(make_pair(solution.tour_[j_], solution.tour_[j_ + 1]));
+
+    removed_arcs.push_back(make_pair(solution.tour_[k_], solution.tour_[k_ + 1]));
+    if (k_ < l_)
+        removed_arcs.push_back(make_pair(solution.tour_[l_], solution.tour_[l_ + 1]));
+
+}
+
+
+/** ------------------------------------------------------------------------------------------------ */
+
+
 void CrossReverseMove::identifyAddedArcs(Solution &solution, vector<pair<int,int>> &new_arcs) {
     new_arcs.clear();
     if (k_ < l_) {

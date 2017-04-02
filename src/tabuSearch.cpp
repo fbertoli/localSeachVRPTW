@@ -7,7 +7,6 @@
 #include <cassert>
 #include <ctime>
 #include <cmath>
-
 #include <iomanip>
 #include <cstring>
 #include <numeric>
@@ -32,8 +31,8 @@ TabuSearch::TabuSearch(Data &data, Initializer *initializer, vector<Cost*> &cost
     clusterisation_.resize(data_.n_requests_,0);
     forbidden_arcs_.resize(data_.n_requests_ + data_.max_vehicles_, vector<int> (data_.n_requests_ + data_.max_vehicles_, 0));
     forbidden_list_.reserve(4*(max_tabu_iterations_+1));
-    new_arcs_.clear();
-//    moves_out_file_.open (data_.name_+ "-moves.txt");
+    removed_arcs_.clear();
+    moves_out_file_.open (data_.name_+ "-moves.txt");
 
     // set pointer of generator to current_solution
     for (auto &el : generators_)
@@ -54,7 +53,7 @@ TabuSearch::TabuSearch(Data &data, Initializer *initializer, vector<Cost*> &cost
 
 TabuSearch::~TabuSearch() {
     // close moves file
-//    moves_out_file_.close();
+    moves_out_file_.close();
 }
 
 /** ------------------------------------------------------------------------------------------------ */
@@ -106,9 +105,9 @@ bool TabuSearch::isMoveTabu() {
 
 void TabuSearch::updateForbiddenArcs()
 {
-    int tabu_duration(rand() % (int(max_tabu_iterations_) - min_tabu_iterations_) + min_tabu_iterations_);
+    int tabu_duration((rand() % (int(max_tabu_iterations_) - min_tabu_iterations_)) + min_tabu_iterations_);
 
-    for (auto &arc : new_arcs_) {
+    for (auto &arc : removed_arcs_) {
         if (forbidden_arcs_[arc.first][arc.second] > 0) {
             forbidden_arcs_[arc.first][arc.second] = tabu_duration + 1;
         }
@@ -154,6 +153,7 @@ void TabuSearch::run()
     current_solution_.write("output-initial-run.txt", cost_components_solution_);
 
     // HISTORY VARAIBLES
+    old_solution_ = current_solution_;
     cost_history_.push_back(current_solution_.cost_);
     initial_solution_ = current_solution_;
 
@@ -206,7 +206,8 @@ void TabuSearch::run()
         current_solution_.cost_ += best_delta_;
 
         // perform move and aupdate tabu arcs
-        best_move_ -> identifyAddedArcs(current_solution_, new_arcs_);
+        best_move_ -> identifyRemovedArcs(current_solution_, removed_arcs_);
+        writeArcsInfo();
         updateForbiddenArcs();
         best_move_ -> performMove(current_solution_);
         assert(current_solution_.checkFeasibilitySolution() && "Solution is not feasible after move is performed");
@@ -230,8 +231,8 @@ void TabuSearch::run()
 
         // write move info and assign old solution (only for inspection)
         recordMoveInfo();
-//            writeMoveInfo();
-//            old_solution_ = current_solution_;
+        writeMoveInfo();
+        old_solution_ = current_solution_;
 
     }
 
@@ -318,12 +319,27 @@ void TabuSearch::recordMoveInfo() {
 
 /** ------------------------------------------------------------------------------------------------ */
 
+void TabuSearch::writeArcsInfo() {
+    CrossReverseMove &move = static_cast<CrossReverseMove&>(*best_move_);
+
+    // Print Moves Information
+    moves_out_file_ << "Iteration " << iteration_ << endl;
+
+    // print tabu status of arcs to be added
+    for (auto &el :removed_arcs_) {
+        moves_out_file_ << "( " << el.first << ", " << el.second << ") ";
+        moves_out_file_ << "  tabu " << forbidden_arcs_[el.first][el.second] << endl;
+    }
+
+}
 
 void TabuSearch::writeMoveInfo() {
     CrossReverseMove &move = static_cast<CrossReverseMove&>(*best_move_);
 
     // Print Moves Information
-    moves_out_file_ << "Iteration " << iteration_ << endl;
+//    moves_out_file_ << "Iteration " << iteration_ << endl;
+
+
 
     // Path 1
     moves_out_file_ << "\tRoute " << move.route_1_ << " \tPath 1 : " << old_solution_.tour_[move.i_];
@@ -353,9 +369,18 @@ void TabuSearch::writeMoveInfo() {
         moves_out_file_ <<  " reversed" << endl;
     moves_out_file_ <<  endl;
 
+
+    // print tabu status of arcs to be added
+    for (auto &el :removed_arcs_) {
+        moves_out_file_ << "( " << el.first << ", " << el.second << ") ";
+        moves_out_file_ << "  tabu " << forbidden_arcs_[el.first][el.second] << endl;
+    }
+
+
     // Delta in cost
     moves_out_file_ << "\tDelta cost         : " << current_solution_.cost_ - old_solution_.cost_ << endl;
 
+    moves_out_file_ << endl;
     moves_out_file_ << endl;
 
 

@@ -39,8 +39,12 @@ public:
 //    void setForbiddenListPntr(vector<pair<int,int>> *forbidden_list) {forbidden_list_ = forbidden_list;}
 //    void setForbiddenArcsPntr(vector<vector<int>> *forbidden_arcs) {forbidden_arcs = forbidden_arcs;}
 
-    /** add arcs (relative to solution) that move is adding */
+    /** add arcs (relative to solution) to new_arcs_ that move is adding */
     virtual void identifyAddedArcs(Solution &solution, vector<pair<int,int>> &new_arcs) = 0;
+
+
+    /** add arcs (relative to solution) to removed_arcs that move is adding */
+    virtual void identifyRemovedArcs(Solution &solution, vector<pair<int,int>> &removed_arcs) = 0;
 
 //
 //    /** VARIABLES */
