@@ -13,4 +13,5 @@ add_library(SOURCE_FILES
                 routes.cpp
                 initializerMultipleRoutes.cpp
                 initializerCosts.cpp
+                tabuSearch.cpp
                 )

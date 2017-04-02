@@ -81,7 +81,6 @@ bool CrossReverseGenerator::first() {
     k_ = length_route_2_ - 1;
     l_ = 0;
     has_next_ = true;
-    move_found_ = false;
     computeRoutesLoad(); // in this computation I could include the path_load initialization in linear time
 
     // find the first move
@@ -375,14 +374,18 @@ bool CrossReverseGenerator::next() {
         // PHASE 2 - do checks
         if ( j_ == 0) { // if we are only removing from route 2 ==> route_2 is feasible (only check route1/path 2)
             if (feasibility_to_path_2_standard_) // if I can get to path 2 standard in time, check cost and if I can come back in time
-                if (feasibilityFromPath2Standard() &&  routes_load_[route_1_] + paths_load_[tour_index_k_ + 1][l_] <= modified_capacity_)
+                if (feasibilityFromPath2Standard() &&  routes_load_[route_1_] + paths_load_[tour_index_k_ + 1][l_] <= modified_capacity_) {
                     foundMove(false, false);
+                    return true;
+                }
 
 
             // reverse path 2 (only if length is higher than 1), and we can reach path 2
             if (l_ > 1 && feasibility_to_path_2_reversed_)
-                if (feasibilityFromPath2Reversed() && routes_load_[route_1_] + paths_load_[tour_index_k_ + 1][l_] <= modified_capacity_)
+                if (feasibilityFromPath2Reversed() && routes_load_[route_1_] + paths_load_[tour_index_k_ + 1][l_] <= modified_capacity_) {
                     foundMove(false, true);
+                    return true;
+                }
 
         } // ---------------------------------------------------------------------------------------------------------
 
@@ -390,13 +393,16 @@ bool CrossReverseGenerator::next() {
         else if (l_ == 0) { // if we are only removing from route 1 ==> route_1 is feasible (only check route2/path 1)
             // standard path 1
             if (feasibility_to_path_1_standard_) {// if I can get to path 1 standard in time, check cost and if I can come back in time
-                if (feasibility_route_2_standard_)
+                if (feasibility_route_2_standard_) {
                     foundMove(false, false);
+                    return true;
+                }
                 else if (feasibilityFromPath1Standard() && // && l_ >= start_l_index_[j_][i_ + 1][k_]
                          routes_load_[route_2_] + paths_load_[tour_index_i_ + 1][j_] <=
                          modified_capacity_) {
                     feasibility_route_2_standard_ = true;
                     foundMove(false, false);
+                    return true;
                 }
 //                else
 //                    start_l_index_[j_][i_ + 1][k_] = l_;
@@ -405,11 +411,14 @@ bool CrossReverseGenerator::next() {
 
             // reverse path ( if there's more than one node)
             if (j_ > 1 && feasibility_to_path_1_reversed_) {
-                if (feasibility_route_2_reversed_)
+                if (feasibility_route_2_reversed_) {
                     foundMove(true, false);
+                    return true;
+                }
                 else if (feasibilityFromPath1Reversed() && routes_load_[route_2_] + paths_load_[tour_index_i_ + 1][j_] <= modified_capacity_) { // &&  l_ >= start_l_index_[i_+1][j_][k_]
                         foundMove(true, false);
                         feasibility_route_2_reversed_ = true;
+                        return true;
                 }
 //                else
 //                    start_l_index_[i_ + 1][j_][k_] = l_;
@@ -426,11 +435,14 @@ bool CrossReverseGenerator::next() {
                     if (feasibilityFromPath2Standard() && feasibilityCapacityRoute1()) {
                         feasibility_route_1_standard_ = true;
                         // check route 2
-                        if (feasibility_route_2_standard_) // if we already know it's feasible
+                        if (feasibility_route_2_standard_)  { // if we already know it's feasible
                             foundMove(false, false);
+                            return true;
+                        }
                         else if (feasibilityFromPath1Standard() && feasibilityCapacityRoute2()) { // && l_ >= start_l_index_[j_][i_ + 1][k_]
                             feasibility_route_2_standard_ = true;
                             foundMove(false, false);
+                            return true;
                         }
 //                        else
 //                            start_l_index_[j_][i_ + 1][k_] = l_;
@@ -442,11 +454,14 @@ bool CrossReverseGenerator::next() {
                     // if we already know route 1 is feasible (from above check) or route 1 is actually feasible
                     if (feasibility_route_1_standard_ or (feasibilityFromPath2Standard() && feasibilityCapacityRoute1())) {
                         // check route 2
-                        if (feasibility_route_2_reversed_)
+                        if (feasibility_route_2_reversed_) {
                             foundMove(true, false);
+                            return true;
+                        }
                         else if (feasibilityFromPath1Reversed() && feasibilityCapacityRoute2()) { // && l_ >= start_l_index_[i_ + 1][j_][k_]
                             feasibility_route_2_reversed_ = true;
                             foundMove(true, false);
+                            return true;
                         }
 //                        else
 //                            start_l_index_[i_ + 1][j_][k_] = l_;
@@ -463,12 +478,15 @@ bool CrossReverseGenerator::next() {
                     if (feasibilityFromPath2Reversed() && feasibilityCapacityRoute1()) {
                         feasibility_route_1_reversed_ = true;
                         // check route 2
-                        if (feasibility_route_2_standard_) // if we already know it's feasible
+                        if (feasibility_route_2_standard_) {// if we already know it's feasible
                             foundMove(true, false);
+                            return true;
+                        }
                         else if (feasibilityFromPath1Standard() && // && l_ >= start_l_index_[i_ + 1][j_][k_]
                                  feasibilityCapacityRoute2()) {
                             feasibility_route_2_standard_ = true;
                             foundMove(true, false);
+                            return true;
                         }
 //                        else
 //                            start_l_index_[i_ + 1][j_][k_] = l_;
@@ -480,11 +498,14 @@ bool CrossReverseGenerator::next() {
                     // if we already know route 1 is feasible (from above check) or route 1 is actually feasible
                     if (feasibility_route_1_reversed_ or (feasibilityFromPath2Reversed() && feasibilityCapacityRoute1())) {
                         // check route 2
-                        if (feasibility_route_2_reversed_)
+                        if (feasibility_route_2_reversed_) {
                             foundMove(true, true);
+                            return true;
+                        }
                         else if (feasibilityFromPath1Reversed() && feasibilityCapacityRoute2()) { // && l_ >= start_l_index_[j_][i_ + 1][k_]
                             feasibility_route_2_reversed_ = true;
                             foundMove(true, true);
+                            return true;
                         }
 //                        else
 //                            start_l_index_[j_][i_ + 1][k_] = l_;
@@ -492,12 +513,6 @@ bool CrossReverseGenerator::next() {
                 }
             }
         }
-
-        if (move_found_) {
-            move_found_ = false;
-            return true;
-        }
-
     } while (has_next_);
     return false;
 }
@@ -540,13 +555,49 @@ inline bool CrossReverseGenerator::feasibilityCapacityRoute2() {
 
 
 void CrossReverseGenerator::foundMove(bool reverse_path_1, bool reverse_path_2) {
-    move_found_ = true;
     move_ -> setMoveVariables(tour_index_i_, tour_index_j_, tour_index_k_, tour_index_l_, route_1_, route_2_, reverse_path_1, reverse_path_2);
 
     // set delta of the move to make the computation of the total delta easier
     computeDeltaDistance(reverse_path_1, reverse_path_2, move_ -> delta_distance_);
     computeDeltaCapacity(move_ -> delta_capacity_);
     move_ -> route_removed_ = (i_ == 0 and j_ == length_route_1_ - 1 and l_ == 0) or (k_ == 0 and l_ == length_route_2_ - 1 and j_ == 0);
+
+
+//    // set tabu status
+//    if (j_ == 0) {
+//        if (not reverse_path_2)
+//            move_->is_tabu_ = ((*move_->forbidden_arcs_)[visit_i_][visit_succ_k_] > 0) or
+//                              ((*move_->forbidden_arcs_)[visit_l_][visit_succ_i_] > 0);
+//        else
+//            move_->is_tabu_ = ((*move_->forbidden_arcs_)[visit_i_][visit_l_] > 0) or
+//                              ((*move_->forbidden_arcs_)[visit_succ_k_][visit_succ_i_] > 0);
+//    }
+//
+//    else if (l_ == 0) {
+//        if (not reverse_path_1)
+//            move_->is_tabu_ = ((*move_->forbidden_arcs_)[visit_k_][visit_succ_i_] > 0) or
+//                              ((*move_->forbidden_arcs_)[visit_j_][visit_succ_k_] > 0);
+//        else
+//            move_->is_tabu_ = ((*move_->forbidden_arcs_)[visit_k_][visit_j_] > 0) or
+//                              ((*move_->forbidden_arcs_)[visit_succ_i_][visit_succ_k_] > 0);
+//    }
+//
+//    else {
+//        bool route_1_taboo;
+//        if (not reverse_path_2)
+//            route_1_taboo = ((*move_->forbidden_arcs_)[visit_i_][visit_succ_k_] > 0) or
+//                            ((*move_->forbidden_arcs_)[visit_l_][visit_succ_j_] > 0);
+//        else
+//            route_1_taboo = ((*move_->forbidden_arcs_)[visit_i_][visit_l_] > 0) or
+//                            ((*move_->forbidden_arcs_)[visit_succ_k_][visit_succ_j_] > 0);
+//
+//        if (not reverse_path_1)
+//            move_->is_tabu_ = route_1_taboo or ((*move_->forbidden_arcs_)[visit_k_][visit_succ_i_] > 0) or
+//                              ((*move_->forbidden_arcs_)[visit_j_][visit_succ_l_] > 0);
+//        else
+//            move_->is_tabu_ = route_1_taboo or ((*move_->forbidden_arcs_)[visit_k_][visit_j_] > 0) or
+//                              ((*move_->forbidden_arcs_)[visit_succ_i_][visit_succ_l_] > 0);
+//    }
 }
 
 

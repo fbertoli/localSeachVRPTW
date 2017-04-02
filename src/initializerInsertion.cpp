@@ -223,6 +223,9 @@ int InitializerInsertion::selectSeedCustomer()
                 return rank_profits_[i];
         }
     }
+
+    // so that compiler does not produce warnings
+    return 0;
 }
 
 

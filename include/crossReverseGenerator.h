@@ -112,9 +112,6 @@ public:
     /** record if there is a next possibility to examine */
     bool has_next_;
 
-    /** record if we found a feasible move */
-    bool move_found_;
-
     /** record the feasibility of reaching path 1 (standard and reverse orientation) from route 2  */
     bool feasibility_to_path_1_standard_, feasibility_to_path_1_reversed_;
 
@@ -150,6 +147,8 @@ public:
 
     /** keep memory of the total load of each route */
     vector<int> routes_load_;
+
+
 
     friend class CrossReverseMove;
     friend class costFixed;

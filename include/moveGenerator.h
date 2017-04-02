@@ -26,8 +26,9 @@ public:
     /** whether there is some space left to explore */
     bool hasNext() {return has_next_;};
 
-    /** change the pointe to current solution */
+    /** change the pointers  */
     void setSolutionPntr(Solution* solution) {current_solution_ = solution;}
+    void setForbiddenArcsPntr(vector<vector<int>> *forbidden_arcs) {forbidden_arcs = forbidden_arcs;}
 
     /** copy the content of the current move into best_move_ */
     virtual void updateBestMove() = 0;
@@ -35,7 +36,7 @@ public:
 
 
     /** VARIABLES */
-protected:
+public:
     /** Data representing the instance */
     const Data &data_;
 
@@ -44,5 +45,12 @@ protected:
 
     /** bool to indicate if there is a next move to check */
     bool has_next_;
+
+    /** the forbidden arcs */
+    vector<vector<int>> *forbidden_arcs_;
+
+    /** is the current move tabu */
+    bool current_move_tabu_;
+
 };
 #endif //LOCALSEARCH_MOVEGENERATOR_H

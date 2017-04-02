@@ -12,6 +12,7 @@ Route::Route(vector<int> stops, double cost_) : stops_(stops), cost_(cost_) {}
 Route& Route::operator= (const Route &route) {
     stops_ = route.stops_;
     cost_ =route.cost_;
+    return *this;
 }
 
 
